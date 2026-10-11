@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>CatLeaf T09 样本（混合情况）</title></head>
+  <body>
+    <outline text="设计与阅读">
+      <outline text="前端">
+        <outline type="rss" text="Cloudflare Blog" xmlUrl="https://blog.cloudflare.com/rss/" />
+      </outline>
+    </outline>
+    <outline type="rss" text="明文源" xmlUrl="http://insecure.example.org/feed.xml" />
+    <outline type="rss" text="重复项" xmlUrl="https://blog.cloudflare.com/rss/" />
+    <outline type="rss" text="无地址项" />
+  </body>
+</opml>

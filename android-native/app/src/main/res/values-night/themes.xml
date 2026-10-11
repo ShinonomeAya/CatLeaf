@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色下窗口背景跟着变，避免启动时闪白 -->
+    <style name="Theme.CatLeaf" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splashBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

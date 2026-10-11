@@ -1,0 +1,36 @@
+{
+  "product": "CatLeaf（猫页）",
+  "version": "0.1.18",
+  "versionCode": 19,
+  "packageId": "dev.local.catleaf.nativeapp",
+  "channel": "candidate",
+  "published": false,
+  "publishedAt": null,
+  "minAndroid": "10",
+  "minSdk": 29,
+  "artifact": {
+    "fileName": "catleaf-0.1.18-code19-candidate.apk",
+    "bytes": 28586510,
+    "sha256": "02a3abaef697e92f74398ee3c54e6d011136eaa97e9aa32feb7789a2a9a96e04",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+  },
+  "websiteUrl": null,
+  "downloadPagePath": "/download/",
+  "proposedAssetPath": "/downloads/catleaf-0.1.18-code19-candidate.apk",
+  "downloadUrl": null,
+  "feedback": {
+    "pagePath": "/feedback/",
+    "recommendedChannel": "GitHub Issues",
+    "url": null,
+    "privateContact": null
+  },
+  "publisher": {
+    "displayName": null,
+    "profileUrl": null,
+    "sourceRepositoryUrl": null
+  },
+  "acceptance": {
+    "G7": "not passed",
+    "G8_L09": "not formally delivered"
+  }
+}

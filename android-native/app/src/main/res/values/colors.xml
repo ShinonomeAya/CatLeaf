@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 品牌色在 Compose 侧 ui/theme/Color.kt 维护（docs/07-设计规范.md）；
+         这里只放 Android 资源层需要的值，避免两份定义漂移 -->
+
+    <!-- 自适应图标背景层 -->
+    <color name="ic_launcher_background">#356A52</color>
+
+    <!-- 启动屏与窗口背景（浅色主题） -->
+    <color name="splashBackground">#FAF9F6</color>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  仅 debug 构建使用：允许对回环地址的明文 HTTP，便于用本地 MockWebServer
+  验证请求头与跳转行为。release 构建不包含本文件，因此正式包的明文访问
+  仍然保持平台默认关闭；生产 TLS 校验也从不放宽。
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

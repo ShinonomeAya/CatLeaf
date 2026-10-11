@@ -1,0 +1,61 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  # 仅手动部署到维护者配置并核实的自有项目。
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Validate and configure own Cloudflare resources
+        env:
+          PROJECT_NAME: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          D1_ID: ${{ secrets.D1_DATABASE_ID }}
+          KV_ID: ${{ secrets.KV_NAMESPACE_ID }}
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          patterns = {
+              'PROJECT_NAME': r'[a-z0-9][a-z0-9-]{0,62}',
+              'D1_ID': r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}',
+              'KV_ID': r'[0-9a-fA-F]{32}',
+              'ACCOUNT_ID': r'[0-9a-fA-F]{32}',
+          }
+          for name, pattern in patterns.items():
+              if not re.fullmatch(pattern, os.environ.get(name, '')):
+                  raise SystemExit(f'Missing or invalid repository configuration: {name}')
+          if not os.environ.get('API_TOKEN'):
+              raise SystemExit('Missing repository configuration: API_TOKEN')
+          path = Path('wrangler.toml')
+          text = path.read_text(encoding='utf-8-sig')
+          for placeholder, name in [('REPLACE_WITH_D1_DATABASE_ID', 'D1_ID'), ('REPLACE_WITH_KV_NAMESPACE_ID', 'KV_ID')]:
+              if text.count(placeholder) != 1:
+                  raise SystemExit('Unexpected resource placeholder count')
+              text = text.replace(placeholder, os.environ[name])
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=${{ github.ref_name }} --commit-hash=${{ github.sha }}

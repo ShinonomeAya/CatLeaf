@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 导出只用应用自己的临时目录，不申请全盘存储权限（契约 §6） -->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

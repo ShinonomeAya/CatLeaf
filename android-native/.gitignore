@@ -1,0 +1,19 @@
+# Gradle / Android 构建产物
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+.idea/
+.kotlin/
+
+# T24 签名材料：keystore 与口令文件绝不入库（口令同步记录在根 .secrets.env）
+keystore/
+keystore.properties

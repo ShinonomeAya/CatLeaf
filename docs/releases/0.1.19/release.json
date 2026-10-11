@@ -1,0 +1,38 @@
+{
+  "product": "CatLeaf（猫页）",
+  "version": "0.1.19",
+  "versionCode": 20,
+  "packageId": "dev.local.catleaf.nativeapp",
+  "channel": "candidate",
+  "published": false,
+  "publishedAt": null,
+  "minAndroid": "10",
+  "minSdk": 29,
+  "artifact": {
+    "fileName": "catleaf-0.1.19-code20-candidate.apk",
+    "bytes": 28623954,
+    "sha256": "7c1acfceca8bb49ca41ce806ceedabcb75d2397a41850d5e27ce0cd58a8e7707",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+  },
+  "websiteUrl": null,
+  "downloadPagePath": "/download/",
+  "proposedAssetPath": "/downloads/catleaf-0.1.19-code20-candidate.apk",
+  "downloadUrl": null,
+  "feedback": {
+    "pagePath": "/feedback/",
+    "recommendedChannel": "GitHub Issues",
+    "url": null,
+    "privateContact": null
+  },
+  "publisher": {
+    "displayName": "ShinonomeAya",
+    "profileUrl": "https://github.com/ShinonomeAya",
+    "sourceRepositoryUrl": null
+  },
+  "acceptance": {
+    "G7": "not passed",
+    "G8_L09": "not formally delivered"
+  },
+  "updateManifestPath": "/releases/latest.json",
+  "releaseNotes": "新增设置中的手动检查更新入口；发现新版后可前往下载页。正式更新服务地址尚待配置。"
+}

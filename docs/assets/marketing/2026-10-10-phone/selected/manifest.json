@@ -1,0 +1,132 @@
+{
+  "captured_date": "2026-10-10",
+  "version": "0.1.18",
+  "versionCode": 19,
+  "device": "2304FPN6DC",
+  "android": "16",
+  "format": "unmodified real-device PNG",
+  "status_bar": "SystemUI cosmetic demo; restored after capture",
+  "images": [
+    {
+      "file": "01-reading-light.png",
+      "source": "01-reading-sspai-light.png",
+      "title": "阅读列表",
+      "use": "首页副图；展示订阅文章与紧凑筛选",
+      "alt": "猫页浅色阅读列表，显示少数派文章和日期、未读筛选",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 429561,
+      "sha256": "37edd715294aceacc2e974b63d8b03d08f82df20d2396a370ff03a8f898d453c"
+    },
+    {
+      "file": "02-reader-light.png",
+      "source": "02-reader-light-top.png",
+      "title": "浅色图文阅读",
+      "use": "首页主图；展示正文图片与阅读工具栏",
+      "alt": "猫页浅色文章阅读页，显示中国国家地理的寒露图片",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 3626318,
+      "sha256": "7fb80afc9a7e036c8e27946e07aa7ccceff6fa733624f8b6b65f2e780a4dce53"
+    },
+    {
+      "file": "03-subscriptions-light.png",
+      "source": "03-subscriptions-light.png",
+      "title": "选择订阅",
+      "use": "订阅管理功能区；全部订阅位于分组上方",
+      "alt": "猫页选择订阅面板，显示全部订阅和六个已有订阅源",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 249956,
+      "sha256": "fc918c408a2aa03846d7664155e35cc03387cdb061c6272ff2a6fd842d5079cf"
+    },
+    {
+      "file": "04-date-filter-light.png",
+      "source": "04-date-filter-light.png",
+      "title": "日期筛选",
+      "use": "筛选功能区；展示统一选择面板",
+      "alt": "猫页日期筛选面板，提供全部日期、今天、指定日期和未知日期",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 282754,
+      "sha256": "11eea766096ec6de2b425b1cb259d492816fc257f4b01b862534a4ae5621e05d"
+    },
+    {
+      "file": "05-discovery-light.png",
+      "source": "05-discovery-light.png",
+      "title": "精选订阅",
+      "use": "快速开始功能区；真实精选目录",
+      "alt": "猫页发现订阅页，展示少数派、爱范儿等精选源",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 415521,
+      "sha256": "38a7c0741c135fc97f728538aaa489719b978b65aad1112b5eca2539ecaeca6c"
+    },
+    {
+      "file": "06-favorites-empty-light.png",
+      "source": "06-favorites-light.png",
+      "title": "收藏空态",
+      "use": "设计细节补充图；实际收藏为空",
+      "alt": "猫页收藏空态，带叶片插画和去阅读按钮",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 124226,
+      "sha256": "2f307a8eac44f0f9a889318f9ecc46b66935f92a39845fb065a1675e40e31199"
+    },
+    {
+      "file": "07-settings-light.png",
+      "source": "07-settings-light.png",
+      "title": "设置",
+      "use": "本机使用与可选 AI 功能说明配图；次要素材",
+      "alt": "猫页设置页，显示本机使用、阅读偏好、存储备份和关于",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 258174,
+      "sha256": "94996200c67388c7f81df64f4899b9503dccae6265133bdd986bf32faaa9c920"
+    },
+    {
+      "file": "08-reader-dark.png",
+      "source": "08-reader-dark-top.png",
+      "title": "深色图文阅读",
+      "use": "与 02 并排展示浅深主题",
+      "alt": "猫页深色文章阅读页，显示同一篇中国国家地理文章",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 3627281,
+      "sha256": "562a54971216b5609d01b0d2fb03cad639a623264d5b69b52d59660400b3c1be"
+    },
+    {
+      "file": "09-search-light.png",
+      "source": "09-search-light.png",
+      "title": "本地搜索",
+      "use": "文章检索功能区；相机查询实际找到五篇",
+      "alt": "猫页搜索页，展示相机查询结果和来源、日期等筛选",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 446988,
+      "sha256": "6d6c80300f29baa6200421eb87eb923c60fced7e77e9c3fe94dcc7bdeaeaee02"
+    },
+    {
+      "file": "10-offline-options-light.png",
+      "source": "10-offline-options-light.png",
+      "title": "离线保存选项",
+      "use": "离线功能介绍；只展示保存前选项，不代表保存成功",
+      "alt": "猫页保存离线选项页，包含正文与图片选择和容量说明",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 311284,
+      "sha256": "1b33a75b3434558196b13b40ce4f49f7caa123b092053e4cd6a36880c9938f70"
+    },
+    {
+      "file": "11-reading-preferences-light.png",
+      "source": "11-reading-preferences-light.png",
+      "title": "阅读偏好",
+      "use": "个性化阅读功能区；主题和字号选择",
+      "alt": "猫页阅读偏好页，提供浅深主题和四档正文字号",
+      "width": 1440,
+      "height": 3200,
+      "bytes": 178305,
+      "sha256": "d3677257f5c27709457ebf2032ae25cd105fb637872ab7c783d791fa008b9391"
+    }
+  ]
+}

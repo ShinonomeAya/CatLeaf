@@ -1,0 +1,38 @@
+{
+  "product": "CatLeaf（猫页）",
+  "version": "0.1.20",
+  "versionCode": 21,
+  "packageId": "dev.local.catleaf.nativeapp",
+  "channel": "candidate",
+  "published": false,
+  "publishedAt": null,
+  "minAndroid": "10",
+  "minSdk": 29,
+  "artifact": {
+    "fileName": "catleaf-0.1.20-code21.apk",
+    "bytes": 28641258,
+    "sha256": "2384ad161ed90f6ebe5cc6e1777e2dd2479c2c1e7f5e7362ea060e1bbd048cda",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+  },
+  "websiteUrl": null,
+  "downloadPagePath": "/download/",
+  "proposedAssetPath": "/downloads/catleaf-0.1.20-code21.apk",
+  "downloadUrl": null,
+  "feedback": {
+    "pagePath": "/feedback/",
+    "recommendedChannel": "GitHub Issues",
+    "url": null,
+    "privateContact": null
+  },
+  "publisher": {
+    "displayName": "ShinonomeAya",
+    "profileUrl": "https://github.com/ShinonomeAya",
+    "sourceRepositoryUrl": null
+  },
+  "acceptance": {
+    "G7": "not passed",
+    "G8_L09": "not formally delivered"
+  },
+  "updateManifestPath": "/releases/latest.json",
+  "releaseNotes": "新增同页段落双语对照；保留原文、图文结构和手动翻译入口，旧译文缓存继续可读。真实供应商与真机双语验收待验证。"
+}

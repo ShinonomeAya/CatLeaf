@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="200" viewBox="0 0 240 200" role="img" aria-label="猫页空态：书页与新叶">
+<title>猫页空态：书页与新叶</title>
+<circle cx="121" cy="97" r="77" fill="#E8EEE7"/>
+<path d="M63 37H125L153 65V159Q153 170 142 170H63Q51 170 51 158V49Q51 37 63 37Z" fill="#FAF9F6" stroke="#356A52" stroke-width="3" stroke-linejoin="round"/>
+<path d="M125 38V56Q125 65 134 65H152" fill="none" stroke="#356A52" stroke-width="3" stroke-linejoin="round"/>
+<path d="M73 91H116M73 109H130M73 127H108" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+<path d="M169 170C166 147 172 127 182 108" fill="none" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+<path d="M179 130C165 113 174 91 204 77C205 100 199 120 179 130Z" fill="#356A52"/>
+<path d="M169 150C151 151 139 139 135 122C155 121 168 131 169 150Z" fill="#98B59C"/>
+<path d="M171 164C177 141 190 131 211 132C206 151 193 164 171 164Z" fill="#98B59C"/>
+<path d="M181 123L194 98M173 158L195 141" fill="none" stroke="#FAF9F6" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M39 173H204" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+</svg>

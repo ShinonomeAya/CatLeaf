@@ -1,0 +1,285 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1120" viewBox="0 0 1440 1120"><rect width="1440" height="1120" fill="#FAF9F6"/><text x="64" y="52" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="14" font-weight="600" fill="#356A52">CATLEAF / ASSET LIBRARY 01</text><text x="64" y="113" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="44" font-weight="600" fill="#252B28">猫页 · SVG 素材</text><text x="64" y="151" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="17" font-weight="400" fill="#6C756F">品牌标记 / Android 适配 / 空态插画 / 操作图标</text><path d="M64 185H1376" stroke="#E4E6DF"/><g><svg x="74" y="216" xmlns="http://www.w3.org/2000/svg" width="510" height="125" viewBox="0 0 392 96">
+<title>CatLeaf 歪头小叶猫 横向组合 light</title>
+<g transform="scale(.75)"><g fill="#356A52">
+<path d="M68 23 C66 11 76 4 91 5 C91 18 80 27 68 23 Z"/>
+<g transform="rotate(-7 64 72)">
+<path fill-rule="evenodd" d="M20 51 C19 44 18 32 23 29 C27 27 37 33 42 37 C55 33 73 33 86 37 C93 32 101 26 106 29 C110 32 109 44 108 51 C117 60 122 72 119 84 C115 101 95 111 65 112 C35 113 14 104 9 88 C5 75 10 61 20 51 Z M39.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M78.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M48 75 C49.2 74.7 50.4 75.5 50.7 76.7 C51.3 79.7 53.7 81.6 57 81.6 C60.2 81.6 62 79.6 62 77 C62 75.7 63 74.7 64.3 74.7 C65.6 74.7 66.6 75.7 66.6 77 C66.6 79.6 68.4 81.6 71.6 81.6 C74.9 81.6 77.3 79.7 77.9 76.7 C78.2 75.5 79.4 74.7 80.6 75 C81.8 75.3 82.6 76.5 82.3 77.7 C81.2 83 77.1 86.2 71.6 86.2 C68.5 86.2 66 85.1 64.3 83.2 C62.6 85.1 60.1 86.2 57 86.2 C51.5 86.2 47.4 83 46.3 77.7 C46 76.5 46.8 75.3 48 75 Z"/>
+</g>
+</g></g>
+<g transform="translate(105 19)"><g fill="none" stroke="#356A52" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M36 13 C31 7 25 5 18 5 C7 5 2 14 2 28 C2 42 7 51 18 51 C25 51 31 49 36 43"/>
+<path d="M69 25 C65 19 59 18 54 21 C46 24 46 39 50 46 C54 53 65 53 70 45 M70 21 V51"/>
+<path d="M87 10 V41 C87 49 91 52 99 50 M78 22 H99"/>
+<path d="M114 5 V51 H143"/>
+<path d="M158 36 H181 C182 26 177 20 170 20 C160 20 155 27 155 36 C155 47 160 52 171 52 C175 52 179 50 182 47"/>
+<path d="M212 25 C208 19 202 18 197 21 C189 24 189 39 193 46 C197 53 208 53 213 45 M213 21 V51"/>
+<path d="M230 51 V16 C230 7 235 4 244 6 M222 22 H244"/>
+</g></g>
+</svg>
+</g><text x="78" y="376" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="22" font-weight="400" fill="#252B28">圆圆的脸，带一点好奇。</text><text x="78" y="412" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="16" font-weight="400" fill="#6C756F">歪头小叶猫 · 可编辑路径 · 无位图与字体依赖</text><rect x="736" y="219" width="640" height="226" rx="20" fill="#181D1A"/><g><svg x="804" y="265" xmlns="http://www.w3.org/2000/svg" width="490" height="120" viewBox="0 0 392 96">
+<title>CatLeaf 歪头小叶猫 横向组合 dark</title>
+<g transform="scale(.75)"><g fill="#94C9A6">
+<path d="M68 23 C66 11 76 4 91 5 C91 18 80 27 68 23 Z"/>
+<g transform="rotate(-7 64 72)">
+<path fill-rule="evenodd" d="M20 51 C19 44 18 32 23 29 C27 27 37 33 42 37 C55 33 73 33 86 37 C93 32 101 26 106 29 C110 32 109 44 108 51 C117 60 122 72 119 84 C115 101 95 111 65 112 C35 113 14 104 9 88 C5 75 10 61 20 51 Z M39.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M78.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M48 75 C49.2 74.7 50.4 75.5 50.7 76.7 C51.3 79.7 53.7 81.6 57 81.6 C60.2 81.6 62 79.6 62 77 C62 75.7 63 74.7 64.3 74.7 C65.6 74.7 66.6 75.7 66.6 77 C66.6 79.6 68.4 81.6 71.6 81.6 C74.9 81.6 77.3 79.7 77.9 76.7 C78.2 75.5 79.4 74.7 80.6 75 C81.8 75.3 82.6 76.5 82.3 77.7 C81.2 83 77.1 86.2 71.6 86.2 C68.5 86.2 66 85.1 64.3 83.2 C62.6 85.1 60.1 86.2 57 86.2 C51.5 86.2 47.4 83 46.3 77.7 C46 76.5 46.8 75.3 48 75 Z"/>
+</g>
+</g></g>
+<g transform="translate(105 19)"><g fill="none" stroke="#94C9A6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M36 13 C31 7 25 5 18 5 C7 5 2 14 2 28 C2 42 7 51 18 51 C25 51 31 49 36 43"/>
+<path d="M69 25 C65 19 59 18 54 21 C46 24 46 39 50 46 C54 53 65 53 70 45 M70 21 V51"/>
+<path d="M87 10 V41 C87 49 91 52 99 50 M78 22 H99"/>
+<path d="M114 5 V51 H143"/>
+<path d="M158 36 H181 C182 26 177 20 170 20 C160 20 155 27 155 36 C155 47 160 52 171 52 C175 52 179 50 182 47"/>
+<path d="M212 25 C208 19 202 18 197 21 C189 24 189 39 193 46 C197 53 208 53 213 45 M213 21 V51"/>
+<path d="M230 51 V16 C230 7 235 4 244 6 M222 22 H244"/>
+</g></g>
+</svg>
+</g><path d="M64 485H1376" stroke="#E4E6DF"/><text x="64" y="531" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="22" font-weight="600" fill="#252B28">01  平台图标</text><text x="64" y="563" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="16" font-weight="400" fill="#6C756F">同一主标，适配不同桌面形状。</text><defs><clipPath id="round"><circle cx="128" cy="650" r="52"/></clipPath><clipPath id="squircle"><rect x="226" y="598" width="104" height="104" rx="26"/></clipPath></defs><g clip-path="url(#round)"><g><svg x="76" y="598" xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="18 18 72 72">
+<title>CatLeaf Android 图标背景</title>
+<path fill="#356A52" d="M0 0H108V108H0Z"/>
+</svg>
+</g><g><svg x="76" y="598" xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="18 18 72 72">
+<title>CatLeaf Android 图标前景</title>
+<g transform="translate(22 22) scale(.5)"><g fill="#FAF9F6">
+<path d="M68 23 C66 11 76 4 91 5 C91 18 80 27 68 23 Z"/>
+<g transform="rotate(-7 64 72)">
+<path fill-rule="evenodd" d="M20 51 C19 44 18 32 23 29 C27 27 37 33 42 37 C55 33 73 33 86 37 C93 32 101 26 106 29 C110 32 109 44 108 51 C117 60 122 72 119 84 C115 101 95 111 65 112 C35 113 14 104 9 88 C5 75 10 61 20 51 Z M39.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M78.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M48 75 C49.2 74.7 50.4 75.5 50.7 76.7 C51.3 79.7 53.7 81.6 57 81.6 C60.2 81.6 62 79.6 62 77 C62 75.7 63 74.7 64.3 74.7 C65.6 74.7 66.6 75.7 66.6 77 C66.6 79.6 68.4 81.6 71.6 81.6 C74.9 81.6 77.3 79.7 77.9 76.7 C78.2 75.5 79.4 74.7 80.6 75 C81.8 75.3 82.6 76.5 82.3 77.7 C81.2 83 77.1 86.2 71.6 86.2 C68.5 86.2 66 85.1 64.3 83.2 C62.6 85.1 60.1 86.2 57 86.2 C51.5 86.2 47.4 83 46.3 77.7 C46 76.5 46.8 75.3 48 75 Z"/>
+</g>
+</g></g>
+</svg>
+</g></g><g clip-path="url(#squircle)"><g><svg x="226" y="598" xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="18 18 72 72">
+<title>CatLeaf Android 图标背景</title>
+<path fill="#356A52" d="M0 0H108V108H0Z"/>
+</svg>
+</g><g><svg x="226" y="598" xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="18 18 72 72">
+<title>CatLeaf Android 图标前景</title>
+<g transform="translate(22 22) scale(.5)"><g fill="#FAF9F6">
+<path d="M68 23 C66 11 76 4 91 5 C91 18 80 27 68 23 Z"/>
+<g transform="rotate(-7 64 72)">
+<path fill-rule="evenodd" d="M20 51 C19 44 18 32 23 29 C27 27 37 33 42 37 C55 33 73 33 86 37 C93 32 101 26 106 29 C110 32 109 44 108 51 C117 60 122 72 119 84 C115 101 95 111 65 112 C35 113 14 104 9 88 C5 75 10 61 20 51 Z M39.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M78.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M48 75 C49.2 74.7 50.4 75.5 50.7 76.7 C51.3 79.7 53.7 81.6 57 81.6 C60.2 81.6 62 79.6 62 77 C62 75.7 63 74.7 64.3 74.7 C65.6 74.7 66.6 75.7 66.6 77 C66.6 79.6 68.4 81.6 71.6 81.6 C74.9 81.6 77.3 79.7 77.9 76.7 C78.2 75.5 79.4 74.7 80.6 75 C81.8 75.3 82.6 76.5 82.3 77.7 C81.2 83 77.1 86.2 71.6 86.2 C68.5 86.2 66 85.1 64.3 83.2 C62.6 85.1 60.1 86.2 57 86.2 C51.5 86.2 47.4 83 46.3 77.7 C46 76.5 46.8 75.3 48 75 Z"/>
+</g>
+</g></g>
+</svg>
+</g></g><rect x="376" y="598" width="104" height="104" rx="26" fill="#E8EEE7"/><g><svg x="376" y="598" xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="18 18 72 72">
+<title>CatLeaf Android 主题单色层</title>
+<g transform="translate(22 22) scale(.5)"><g fill="#356A52">
+<path d="M68 23 C66 11 76 4 91 5 C91 18 80 27 68 23 Z"/>
+<g transform="rotate(-7 64 72)">
+<path fill-rule="evenodd" d="M20 51 C19 44 18 32 23 29 C27 27 37 33 42 37 C55 33 73 33 86 37 C93 32 101 26 106 29 C110 32 109 44 108 51 C117 60 122 72 119 84 C115 101 95 111 65 112 C35 113 14 104 9 88 C5 75 10 61 20 51 Z M39.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M78.5 64 a4.5 4.5 0 1 0 9 0 a4.5 4.5 0 1 0 -9 0 Z M48 75 C49.2 74.7 50.4 75.5 50.7 76.7 C51.3 79.7 53.7 81.6 57 81.6 C60.2 81.6 62 79.6 62 77 C62 75.7 63 74.7 64.3 74.7 C65.6 74.7 66.6 75.7 66.6 77 C66.6 79.6 68.4 81.6 71.6 81.6 C74.9 81.6 77.3 79.7 77.9 76.7 C78.2 75.5 79.4 74.7 80.6 75 C81.8 75.3 82.6 76.5 82.3 77.7 C81.2 83 77.1 86.2 71.6 86.2 C68.5 86.2 66 85.1 64.3 83.2 C62.6 85.1 60.1 86.2 57 86.2 C51.5 86.2 47.4 83 46.3 77.7 C46 76.5 46.8 75.3 48 75 Z"/>
+</g>
+</g></g>
+</svg>
+</g><text x="92" y="737" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="15" font-weight="400" fill="#6C756F">圆形</text><text x="237" y="737" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="15" font-weight="400" fill="#6C756F">圆角方形</text><text x="393" y="737" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="15" font-weight="400" fill="#6C756F">主题图标</text><text x="737" y="531" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="22" font-weight="600" fill="#252B28">02  空态插画</text><text x="737" y="563" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="16" font-weight="400" fill="#6C756F">同一几何结构，深浅主题分别交付。</text><g><svg x="750" y="582" xmlns="http://www.w3.org/2000/svg" width="222" height="185" viewBox="0 0 240 200">
+<title>猫页空态：书页与新叶</title>
+<circle cx="121" cy="97" r="77" fill="#E8EEE7"/>
+<path d="M63 37H125L153 65V159Q153 170 142 170H63Q51 170 51 158V49Q51 37 63 37Z" fill="#FAF9F6" stroke="#356A52" stroke-width="3" stroke-linejoin="round"/>
+<path d="M125 38V56Q125 65 134 65H152" fill="none" stroke="#356A52" stroke-width="3" stroke-linejoin="round"/>
+<path d="M73 91H116M73 109H130M73 127H108" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+<path d="M169 170C166 147 172 127 182 108" fill="none" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+<path d="M179 130C165 113 174 91 204 77C205 100 199 120 179 130Z" fill="#356A52"/>
+<path d="M169 150C151 151 139 139 135 122C155 121 168 131 169 150Z" fill="#98B59C"/>
+<path d="M171 164C177 141 190 131 211 132C206 151 193 164 171 164Z" fill="#98B59C"/>
+<path d="M181 123L194 98M173 158L195 141" fill="none" stroke="#FAF9F6" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M39 173H204" stroke="#356A52" stroke-width="3" stroke-linecap="round"/>
+</svg>
+</g><rect x="1070" y="575" width="290" height="202" rx="16" fill="#181D1A"/><g><svg x="1104" y="582" xmlns="http://www.w3.org/2000/svg" width="222" height="185" viewBox="0 0 240 200">
+<title>猫页空态：深色书页与新叶</title>
+<circle cx="121" cy="97" r="77" fill="#2B4032"/>
+<path d="M63 37H125L153 65V159Q153 170 142 170H63Q51 170 51 158V49Q51 37 63 37Z" fill="#232A25" stroke="#94C9A6" stroke-width="3" stroke-linejoin="round"/>
+<path d="M125 38V56Q125 65 134 65H152" fill="none" stroke="#94C9A6" stroke-width="3" stroke-linejoin="round"/>
+<path d="M73 91H116M73 109H130M73 127H108" stroke="#94C9A6" stroke-width="3" stroke-linecap="round"/>
+<path d="M169 170C166 147 172 127 182 108" fill="none" stroke="#94C9A6" stroke-width="3" stroke-linecap="round"/>
+<path d="M179 130C165 113 174 91 204 77C205 100 199 120 179 130Z" fill="#94C9A6"/>
+<path d="M169 150C151 151 139 139 135 122C155 121 168 131 169 150Z" fill="#5C896C"/>
+<path d="M171 164C177 141 190 131 211 132C206 151 193 164 171 164Z" fill="#5C896C"/>
+<path d="M181 123L194 98M173 158L195 141" fill="none" stroke="#232A25" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M39 173H204" stroke="#94C9A6" stroke-width="3" stroke-linecap="round"/>
+</svg>
+</g><path d="M64 807H1376" stroke="#E4E6DF"/><text x="64" y="855" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="22" font-weight="600" fill="#252B28">03  界面操作图标</text><text x="64" y="887" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="16" font-weight="400" fill="#6C756F">Lucide 0.562.0 · 24 × 24 · 统一圆角描边</text><g color="#356A52"><svg
+  x="76" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 18h-5" />
+  <path d="M18 14h-8" />
+  <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" />
+  <rect width="8" height="4" x="10" y="6" rx="1" />
+</svg>
+</g><g color="#356A52"><svg
+  x="185" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+</svg>
+</g><g color="#356A52"><svg
+  x="294" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+</g><g color="#356A52"><svg
+  x="403" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>
+</g><g color="#356A52"><svg
+  x="512" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+</g><g color="#356A52"><svg
+  x="621" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>
+</g><g color="#356A52"><svg
+  x="730" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m5 8 6 6" />
+  <path d="m4 14 6-6 2-3" />
+  <path d="M2 5h12" />
+  <path d="M7 2h1" />
+  <path d="m22 22-5-10-5 10" />
+  <path d="M14 18h6" />
+</svg>
+</g><g color="#356A52"><svg
+  x="839" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="18" cy="5" r="3" />
+  <circle cx="6" cy="12" r="3" />
+  <circle cx="18" cy="19" r="3" />
+  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+</svg>
+</g><g color="#356A52"><svg
+  x="948" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15V3" />
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  <path d="m7 10 5 5 5-5" />
+</svg>
+</g><g color="#356A52"><svg
+  x="1057" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M10 11v6" />
+  <path d="M14 11v6" />
+  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+  <path d="M3 6h18" />
+  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+</svg>
+</g><g color="#356A52"><svg
+  x="1166" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 20h.01" />
+  <path d="M8.5 16.429a5 5 0 0 1 7 0" />
+  <path d="M5 12.859a10 10 0 0 1 5.17-2.69" />
+  <path d="M19 12.859a10 10 0 0 0-2.007-1.523" />
+  <path d="M2 8.82a15 15 0 0 1 4.177-2.643" />
+  <path d="M22 8.82a15 15 0 0 0-11.288-3.764" />
+  <path d="m2 2 20 20" />
+</svg>
+</g><g color="#356A52"><svg
+  x="1275" y="933" xmlns="http://www.w3.org/2000/svg"
+  width="32"
+  height="32"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m9 12 2 2 4-4" />
+</svg>
+</g><text x="64" y="1062" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="14" font-weight="400" fill="#6C756F">设计交付 v2.0   /   2026.09.22</text><text x="932" y="1062" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="14" font-weight="400" fill="#6C756F">完整源文件与使用规则见素材目录</text></svg>

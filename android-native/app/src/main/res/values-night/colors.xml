@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色主题只换背景；品牌强调色由 Compose 主题逐项映射 -->
+    <color name="splashBackground">#181D1A</color>
+</resources>

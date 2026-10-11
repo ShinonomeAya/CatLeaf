@@ -1,0 +1,32 @@
+name = "catleaf"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# ─── D1 Database ───
+[[d1_databases]]
+binding = "DB"
+database_name = "catleaf-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "drizzle/d1-migrations"
+
+# ─── KV Namespace (rate limiting) ───
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# ─── Secrets (set via `wrangler pages secret put`) ───
+# ADMIN_SECRET
+# DATABASE_URL  (optional, Neon PG fallback)
+
+# ─── Environment Variables ───
+[vars]
+MEDIA_PROXY_MAX_BYTES = "52428800"  # 50MB
+ARTICLE_EXTRACT_MAX_BYTES = "5242880"  # 5MB
+
+# 浏览器跨域来源白名单，逗号分隔。留空＝不向任何浏览器来源开放跨域读取；
+# 原生 App 不使用 CORS，因此留空不影响 App。不要填 '*'。
+ALLOWED_ORIGINS = ""
+
+# debug 路由默认关闭；本地排查时才在 dev 配置里设为 "true"。
+ENABLE_DEBUG_ROUTE = "false"

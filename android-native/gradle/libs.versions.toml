@@ -1,0 +1,68 @@
+[versions]
+jsonTest = "20260814"
+# N01 锁定的版本组合：AGP 8.13.2 + Gradle 8.14.3（本机已缓存）+ Kotlin 2.4.20。
+# 不跟进 AGP 9.x：它是主版本变更，需要 Gradle 9.x 与新的 DSL 迁移，与本任务无关。
+agp = "8.13.2"
+# Kotlin 2.3.20 而不是更新的 2.4.x：KSP 目前最新只到 2.3.20（KSP 2.3.12 依赖
+# kotlin-stdlib 2.3.20），没有 KSP 就用不了 Room 的代码生成。
+kotlin = "2.3.20"
+ksp = "2.3.12"
+coreKtx = "1.17.0"
+activityCompose = "1.13.0"
+lifecycle = "2.10.0"
+lifecycleViewmodelCompose = "2.10.0"
+composeBom = "2026.03.01"
+splashscreen = "1.2.0"
+room = "2.8.5"
+datastore = "1.2.1"
+# OkHttp 4.12.0：由 Kotlin 1.9 编译，元数据可被 Kotlin 2.3.20 读取（5.x 的风险见 T05 记录）
+okhttp = "4.12.0"
+# 正文净化/提取（契约第 7 节）：jsoup 做同一 allowlist 净化，Readability4J 做全文提取
+jsoup = "1.21.2"
+readability4j = "1.0.8"
+# WebViewAssetLoader：App 控制的 HTTPS 虚拟来源（契约第 7 节）
+webkit = "1.14.0"
+junit = "4.13.2"
+androidxJunit = "1.3.0"
+espresso = "3.7.0"
+
+[libraries]
+json-test = { group = "org.json", name = "json", version.ref = "jsonTest" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+readability4j = { group = "net.dankito.readability4j", name = "readability4j", version.ref = "readability4j" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

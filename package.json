@@ -1,0 +1,42 @@
+{
+  "name": "catleaf-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "build": "node tools/prepare-backend.mjs && wrangler pages functions build --outdir dist/_worker.js",
+    "preview": "npm run preview:cf",
+    "preview:cf": "npm run build && wrangler pages dev dist",
+    "deploy:cf": "npm run build && wrangler pages deploy dist",
+    "db:generate:d1": "drizzle-kit generate --config=drizzle.d1.config.ts",
+    "db:migrate:d1:local": "wrangler d1 migrations apply catleaf-db --local",
+    "db:migrate:d1:remote": "wrangler d1 migrations apply catleaf-db --remote",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test:core": "node tests/fetch-boundary.mjs && node tests/api-boundary-module.mjs && node tests/feed-management.mjs && node tests/sql-identifier.mjs"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "drizzle-orm": "0.45.2",
+    "linkedom": "^0.18.12"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "@eslint/js": "^9.39.3",
+    "@types/mozilla-readability": "^0.2.1",
+    "@types/node": "^22.14.0",
+    "drizzle-kit": "^0.28.1",
+    "esbuild": "0.25.12",
+    "eslint": "^9.39.3",
+    "globals": "^16.5.0",
+    "typescript": "~5.8.2",
+    "typescript-eslint": "^8.56.1",
+    "wrangler": "^4.100.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

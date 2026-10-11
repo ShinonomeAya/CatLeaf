@@ -1,0 +1,41 @@
+<!-- 由 docs/assets/illustrations/empty-reading-dark.svg 手工逐元素转换（UIR03/原型 25）：
+     路径数据与颜色原样保留；circle 改写为两段圆弧。按 App 实际主题（不是系统主题）在 Compose 里选用。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="200dp"
+    android:viewportWidth="240"
+    android:viewportHeight="200">
+    <path android:pathData="M44,97a77,77 0 1,0 154,0a77,77 0 1,0 -154,0z"
+        android:fillColor="#2B4032" />
+    <path android:pathData="M63 37H125L153 65V159Q153 170 142 170H63Q51 170 51 158V49Q51 37 63 37Z"
+        android:fillColor="#232A25"
+        android:strokeColor="#94C9A6"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round" />
+    <path android:pathData="M125 38V56Q125 65 134 65H152"
+        android:strokeColor="#94C9A6"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round" />
+    <path android:pathData="M73 91H116M73 109H130M73 127H108"
+        android:strokeColor="#94C9A6"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+    <path android:pathData="M169 170C166 147 172 127 182 108"
+        android:strokeColor="#94C9A6"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+    <path android:pathData="M179 130C165 113 174 91 204 77C205 100 199 120 179 130Z"
+        android:fillColor="#94C9A6" />
+    <path android:pathData="M169 150C151 151 139 139 135 122C155 121 168 131 169 150Z"
+        android:fillColor="#5C896C" />
+    <path android:pathData="M171 164C177 141 190 131 211 132C206 151 193 164 171 164Z"
+        android:fillColor="#5C896C" />
+    <path android:pathData="M181 123L194 98M173 158L195 141"
+        android:strokeColor="#232A25"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path android:pathData="M39 173H204"
+        android:strokeColor="#94C9A6"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+</vector>

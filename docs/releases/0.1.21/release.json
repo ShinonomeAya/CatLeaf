@@ -1,0 +1,40 @@
+{
+  "product": "CatLeaf（猫页）",
+  "version": "0.1.21",
+  "versionCode": 22,
+  "packageId": "dev.local.catleaf.nativeapp",
+  "channel": "candidate",
+  "published": false,
+  "publishedAt": null,
+  "minAndroid": "10",
+  "minSdk": 29,
+  "artifact": {
+    "fileName": "catleaf-0.1.21-code22.apk",
+    "bytes": 28641758,
+    "sha256": "3ad4dad8fcbb99a988c61c149fcc0ca3adccaf8574b4c1542332d7300b9558ce",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "builtAt": "2026-10-11"
+  },
+  "websiteUrl": null,
+  "downloadPagePath": "/download/",
+  "proposedAssetPath": "/downloads/catleaf-0.1.21-code22.apk",
+  "downloadUrl": null,
+  "feedback": {
+    "pagePath": "/feedback/",
+    "recommendedChannel": "GitHub Issues",
+    "url": null,
+    "privateContact": null
+  },
+  "publisher": {
+    "displayName": "ShinonomeAya",
+    "profileUrl": "https://github.com/ShinonomeAya",
+    "sourceRepositoryUrl": null,
+    "proposedSourceRepositoryUrl": "https://github.com/ShinonomeAya/CatLeaf"
+  },
+  "acceptance": {
+    "G7": "not passed",
+    "G8_L09": "not formally delivered"
+  },
+  "updateManifestPath": "/releases/latest.json",
+  "releaseNotes": "标题与正文合并在同一次手动翻译中；AI状态、重新翻译及费用说明改为随文章滚动，顶部功能区和原文/双语标签保持固定。旧缓存保留，不自动补译标题。"
+}
