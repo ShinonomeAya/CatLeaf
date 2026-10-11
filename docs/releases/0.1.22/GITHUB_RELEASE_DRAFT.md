@@ -1,29 +1,44 @@
-# CatLeaf 0.1.22 测试候选发布草稿
+# CatLeaf 0.1.22 发布说明
 
-本文件保留发布准备说明。用户已授权公开源码和测试候选APK，2026-10-11已发布[0.1.22 Pre-release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22)。公开源码从审查后的独立快照建立新历史，原工作区的旧Git历史留在本机。
+本文件与[已发布的 Pre-release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22)说明同步。
 
-## 发布说明
+CatLeaf（猫页）是一款原生Android RSS阅读器，默认在本机使用，无需注册。
 
-CatLeaf（猫页）是原生 Android RSS 阅读器，默认本机使用，无需注册。支持订阅与分组、全部订阅阅读、日期／未读筛选、搜索、全文提取、收藏、单篇图文离线，以及用户手动发起的 AI 双语对照和日摘要。
+**0.1.22（code23）为公开测试版（Pre-release），最低Android10。完整发布验证仍在继续。**
 
-此版本为 **0.1.22（code23）测试候选**，最低 Android 10。完整发布验收仍在进行，不作为 G7/G8 正式交付。GitHub Release 已标记为 Pre-release。
+### 本版内容
 
-底部选中Tab文字统一为森林绿。标题和正文可在同页双语对照，顶部功能区和原文／双语按钮保持固定，译文状态与重新翻译说明随文章滚动。旧译文缓存保留，不自动补译或发起 AI 请求。
+支持订阅与分组、全部订阅阅读和继续加载、日期／未读筛选、搜索、全文提取、收藏、单篇图文离线，以及手动发起的AI双语对照和日摘要。
 
-## 安装文件
+本版修正底部选中Tab文字残留的默认紫色。标题和正文支持同页双语对照，顶部功能区及原文／双语按钮保持固定，译文状态与重新翻译说明随文章滚动。
 
-- 文件：`catleaf-0.1.22-code23.apk`，28,641,758 bytes；2026-10-11 重新构建。
+### 下载与安装
+
+- 安装文件：`catleaf-0.1.22-code23.apk`，28,641,758bytes。
+- 包名：`dev.local.catleaf.nativeapp`。已有同签名版本可覆盖安装，保留数据。
 - APK SHA-256：`2c66894c1c5a3298b268f42e5af52f07f66944be37fc0591c9fe902bf3d592ea`。
-- 签名证书 SHA-256：`5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73`。
-- 包名：`dev.local.catleaf.nativeapp`。已有用户使用同签名 APK 覆盖安装，保留数据。
+- 签名证书SHA-256：`5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73`。
 
-实际测试范围及未通过的完整验收项目见[公开验收摘要](../../validation/验收记录.md)。RSS 通常只提供近期文章；图片、全文和部分订阅受原站、登录及网络限制。离线只保证成功保存的内容。AI 请求可能产生供应商费用。
+### 已知限制与后续事项
 
-## 已完成的公开操作
+- App在线检查更新服务尚未接通，目前请从Releases获取版本，进度见[更新服务接入 #1](https://github.com/ShinonomeAya/CatLeaf/issues/1)。
+- RSS通常只提供近期文章；部分订阅、全文和图片受原站、登录与网络限制。离线只保证成功保存的内容。
+- AI请求由用户手动发起，会发送所选文章文字给配置的供应商，可能产生费用。
+- 完整兼容、性能、无障碍与数据恢复验证仍在继续，跟踪见[测试版后续验证 #2](https://github.com/ShinonomeAya/CatLeaf/issues/2)。这表示证据尚未补齐，不等于已经发现故障。
 
-1. 核对独立快照的逐文件清单和暂存差异；保留 MIT 及上游版权，排除私钥、真实云配置、私人记录和旧 Git 对象。
-2. 按用户明确授权创建[公开仓库](https://github.com/ShinonomeAya/CatLeaf)并推送502文件的新历史，标签`v0.1.22`对应源码提交`203b075ebc5c2d483c5f31c9ecd05e3779719a32`。
-3. Issues和私人漏洞报告已启用；README、SECURITY及版本清单已登记实际入口，敏感信息使用私人报告渠道。
-4. 实际APK和SHA-256文件已上传Pre-release。线上APK匿名HTTP200，长度及重新下载的SHA-256一致。官网和App更新清单仍未接通。
+<details>
+<summary>本版实际验证范围与待验证项</summary>
 
-维护者：[ShinonomeAya](https://github.com/ShinonomeAya)。后端来源及 MIT 版权见[项目说明](../../../README.md#项目来源开源许可)和[LICENSE](../../../LICENSE)。
+最终源码的194个单元测试通过，Debug／Release构建成功；lint为0错误、27警告、2提示。
+
+Android16测试手机完成同签名保数据升级、浅／深主题大字定向检查、全部订阅200→400→600继续加载、国家地理图文及返回、旧离线包断网强停重开读取正文与抽查图片；原订阅、收藏和离线包保留。
+
+本次定向验证不代表完整验收。Android10完整矩阵、大规模实体性能／图片内存、完整TalkBack／键盘、凭据升级／系统文件导入导出／恢复故障，以及最终主动离线预算失败保护等仍待验证。完整G7未通过，G8/L09未正式交付；详细记录见[验收摘要](https://github.com/ShinonomeAya/CatLeaf/blob/main/docs/validation/验收记录.md)。
+
+</details>
+
+### 反馈与项目来源
+
+维护者：[ShinonomeAya](https://github.com/ShinonomeAya)。普通问题使用[Issues](https://github.com/ShinonomeAya/CatLeaf/issues/new/choose)，安全问题使用[私人漏洞报告](https://github.com/ShinonomeAya/CatLeaf/security/advisories/new)，不要公开密钥或私人数据。
+
+后端基于[Sallyn0225/gemini-rss-app](https://github.com/Sallyn0225/gemini-rss-app)继续开发，保留MIT许可及`Copyright (c) 2025 su-kaka`；原生客户端采用Kotlin／Jetpack Compose，准确说明见[项目来源／开源许可](https://github.com/ShinonomeAya/CatLeaf#项目来源开源许可)。

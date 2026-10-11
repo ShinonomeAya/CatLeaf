@@ -37,3 +37,9 @@
 
 - [x] 按用户要求参考同类开源阅读器，补充正式深／浅品牌图标、六张既有公开真机截图、下载入口、快速上手、功能与数据边界、构建和反馈说明；保留准确来源／MIT及Pre-release验收结论。
 - [x] 六张图与宣传清单哈希一致，注明0.1.18拍摄版本；图片和本地链接核对，GitHub GFM渲染检查。只修改文档，App代码及0.1.22 APK不变。
+
+## 2026-10-11 README简化与版本跟进
+
+- [x] 按用户要求，README仅保留简短测试版声明与Releases／Issues入口；删除测试数字、内部验收编号和详细验收段，使用规则链接指南、开发说明折叠。
+- [x] Release说明保留本版真实验证范围，详细结果放折叠区；创建[更新服务接入 #1](https://github.com/ShinonomeAya/CatLeaf/issues/1)和[测试版后续验证 #2](https://github.com/ShinonomeAya/CatLeaf/issues/2)，不将未验证场景写成已发现缺陷。
+- [x] README GFM与链接检查，Release说明回读一致、Pre-release状态／标签／APK及校验资产保持。只改说明与跟进记录，原G7/G8结论及App产物不变。

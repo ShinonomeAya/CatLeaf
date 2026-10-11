@@ -18,7 +18,7 @@
 
 猫页把订阅、阅读、搜索与收藏放在同一个地方。添加喜欢的 RSS／Atom 源，就可以在手机上阅读；全文获取、单篇图文离线和 AI 双语对照按需使用。普通阅读无需配置 AI，也无需部署服务器。
 
-> 当前公开版本为 **0.1.22（code23）Pre-release 测试版**，最低 Android 10。完整兼容、性能与升级恢复验收仍在继续，详见[验收进度](#验收进度)。
+> 当前为 **0.1.22 公开测试版**。版本说明与已知问题请查看 [Releases](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22) 和 [Issues](https://github.com/ShinonomeAya/CatLeaf/issues)。
 
 ## 界面预览
 
@@ -72,14 +72,13 @@
 
 | 项目 | 当前测试版 |
 | --- | --- |
-| 版本 | 0.1.22 · versionCode 23 · Pre-release |
+| 版本 | 0.1.22 · Pre-release 测试版 |
 | 系统 | Android 10 及以上 |
-| 安装包 | 28.64 MB（28,641,758 bytes） |
-| 包名 | `dev.local.catleaf.nativeapp` |
+| 安装包 | 28.64 MB |
 
 从[GitHub Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22)下载安装 APK，按 Android 的提示完成安装。已有猫页请使用同包名、同签名且版本号更高的 APK **覆盖升级**，保留原数据。
 
-Release 附有 SHA-256 校验文件；包大小、完整哈希和签名证书摘要见[版本清单](docs/releases/0.1.22/release.json)。App 在线检查更新服务尚未接通，请通过本仓库 Releases 获取版本。
+校验文件、签名和本版说明见 [Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22)。目前请通过 Releases 获取版本，[App 在线检查更新服务](https://github.com/ShinonomeAya/CatLeaf/issues/1)尚未接通。
 
 ## 开始阅读
 
@@ -88,35 +87,20 @@ Release 附有 SHA-256 校验文件；包大小、完整哈希和签名证书摘
 3. 打开文章阅读；只有摘要时，可尝试**获取全文**。想离线阅读时，主动保存正文与图片。
 4. 需要翻译或日摘要时，再到设置中配置自己的 AI 服务，并手动确认生成请求。
 
-### 历史文章与本机搜索
+使用时请留意：
 
-RSS 通常只提供近期条目，首次添加不等于抓取网站全部历史。每次成功获取的文章记录会累积保存在本机，超过首批 200 篇可以继续加载。搜索只查当前使用方式下已保存的内容，不搜索互联网。
+- RSS 通常只提供近期条目；部分订阅、全文和图片受原站、登录与网络限制。
+- 离线只保证成功保存的内容。OPML／状态导出不含正文、离线图片、AI 结果或密钥，文件中的订阅地址可能带访问参数，请私密保存。
+- AI 会将确认范围的文章文字发送给你配置的供应商，可能产生费用；请求由你手动发起。
 
-### 正文、图片与离线保存
-
-全文提取和图片加载受原站格式、网络与访问限制影响。普通缓存可能被清理；收藏与主动离线包分别保护，离线仅保证成功保存的正文和图片。
-
-单图上限 **10 MiB**，单篇离线预算 **20 MiB／50 图**，总预算 **300 MiB**。预算不足会提示部分完成，不能把“已收藏”或“保存了链接”当作已经完整离线。
-
-### 需要配置或登录的订阅
-
-部分目录条目需要你先配置自己的 RSS 生成服务，再添加可读取的 HTTPS 订阅地址。猫页当前不接收原站的账号 Cookie／Token；仍要求登录的内容可能无法直接读取。配置要求以发现页说明和原服务文档为准。
-
-### 数据、隐私与 AI
-
-订阅、缓存、阅读与收藏状态默认保存在设备上。猫页没有应用内账号、广告或分析 SDK；网络请求发往订阅／文章来源、你配置的实例，以及你主动使用的 AI 服务。
-
-实例与 AI 密钥通过 Android Keystore 保护的密钥加密，存放在应用私有文件。AI 请求会将确认范围内的文章文字发送给你选择的供应商，可能产生费用；不配置 AI 也可以阅读。
-
-OPML 和阅读状态导出不包含正文、离线图片、AI 结果或密钥，不能代替完整数据备份。订阅 URL 可能自带访问参数，导出文件请私密保存。详细说明见[本机与实例帮助](docs/14-本机使用与实例帮助.md)及[数据与权限说明](docs/公开APK首发材料.md#数据与网络说明)。
-
-## 验收进度
-
-0.1.22 最终源码的 **194 个单元测试通过**，Debug／Release 构建成功；lint 为 **0 错误、27 警告、2 提示**。Android 16 测试手机完成同签名保数据升级、主题与筛选面板、全部订阅 200→400→600 继续加载、国家地理图文、旧离线包断网强停重开等定向复测。
-
-完整 Android 10／页面矩阵、大规模性能与图片内存、完整 TalkBack／键盘、凭据升级与恢复故障等仍待验证。**G7 尚未通过，G8/L09 未正式交付。** 当前公开测试版与完整验收分别记录，见[最终候选验收摘要](docs/2026-10-11-最终候选验收与公开准备.md)和[当前任务](tasks/todo.md)。
+历史文章、搜索范围、离线容量、订阅配置及备份规则见[使用指南](docs/14-本机使用与实例帮助.md)；数据与权限说明见[隐私说明](docs/公开APK首发材料.md#数据与网络说明)。
 
 ## 开发与构建
+
+客户端使用 Kotlin + Jetpack Compose，可选实例后端使用 TypeScript + Cloudflare Pages Functions。
+
+<details>
+<summary>查看技术栈、客户端构建与后端开发说明</summary>
 
 | 部分 | 技术栈 |
 | --- | --- |
@@ -160,9 +144,11 @@ API 需要配置自己的实例凭据，详见[接口契约](docs/04-架构与�
 
 </details>
 
+</details>
+
 ### 项目资料
 
-[产品需求](docs/03-PRD.md) · [接口契约](docs/04-架构与接口契约.md) · [页面说明](docs/05-页面与状态说明.md) · [设计规范](docs/07-设计规范.md) · [原型](docs/prototypes/README.md) · [验收摘要](docs/validation/验收记录.md)
+[产品需求](docs/03-PRD.md) · [接口契约](docs/04-架构与接口契约.md) · [设计规范](docs/07-设计规范.md) · [原型](docs/prototypes/README.md) · [开发约定](AGENTS.md)
 
 ## 反馈与参与
 
@@ -175,4 +161,4 @@ API 需要配置自己的实例凭据，详见[接口契约](docs/04-架构与�
 
 后端基于 [Sallyn0225/gemini-rss-app](https://github.com/Sallyn0225/gemini-rss-app) 的提交 `36d0fa44aabc8f17c7d2e73ec382124677551262` 继续开发；当前客户端采用 Kotlin／Jetpack Compose。项目保留原 **MIT** 许可及 `Copyright (c) 2025 su-kaka`，见[LICENSE](LICENSE)。
 
-第三方依赖与图标许可见[随包许可声明](android-native/app/src/main/assets/licenses/THIRD-PARTY.txt)及[素材说明](docs/assets/README.md)。截图中的文章与图片归原内容提供者所有，保留来源标识；公开仓库采用审查后的新历史，原始设备证据和本机配置保存在仓库外。
+第三方依赖与图标许可见[随包许可声明](android-native/app/src/main/assets/licenses/THIRD-PARTY.txt)及[素材说明](docs/assets/README.md)。截图中的文章与图片归原内容提供者所有，保留来源标识。
