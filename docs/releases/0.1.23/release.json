@@ -4,10 +4,10 @@
   "versionCode": 24,
   "packageId": "dev.local.catleaf.nativeapp",
   "channel": "pre-release",
-  "published": false,
-  "publishedAt": null,
-  "releaseUrl": null,
-  "sourceCommit": null,
+  "published": true,
+  "publishedAt": "2026-10-11T08:30:14Z",
+  "releaseUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23",
+  "sourceCommit": "6fbef20b73ccf19e1ec70f0e7d1460c64b1a772f",
   "minAndroid": "10",
   "minSdk": 29,
   "artifact": {
@@ -20,7 +20,7 @@
   "websiteUrl": null,
   "downloadPagePath": "/download/",
   "proposedAssetPath": "/downloads/catleaf-0.1.23-code24.apk",
-  "downloadUrl": null,
+  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.23/catleaf-0.1.23-code24.apk",
   "feedback": {
     "pagePath": "/feedback/",
     "recommendedChannel": "GitHub Issues",
@@ -38,5 +38,5 @@
   },
   "updateManifestPath": "/releases/latest.json",
   "updateManifestUrl": "https://raw.githubusercontent.com/ShinonomeAya/CatLeaf/main/docs/releases/latest.json",
-  "releaseNotes": "接通设置中的手动检查更新：读取官方GitHub版本清单，提示新版并打开官方下载地址。保留数据覆盖升级；不后台检查或自动安装。"
+  "releaseNotes": "公开测试版：接通设置中的手动检查更新，读取官方GitHub版本清单，提示新版并打开官方下载地址。保留数据覆盖升级；不后台检查或自动安装。"
 }

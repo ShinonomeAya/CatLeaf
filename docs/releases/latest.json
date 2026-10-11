@@ -1,8 +1,8 @@
 {
   "packageId": "dev.local.catleaf.nativeapp",
   "published": true,
-  "version": "0.1.22",
-  "versionCode": 23,
-  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.22/catleaf-0.1.22-code23.apk",
-  "releaseNotes": "公开测试版：修正底部导航颜色，支持标题与正文同页双语对照。"
+  "version": "0.1.23",
+  "versionCode": 24,
+  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.23/catleaf-0.1.23-code24.apk",
+  "releaseNotes": "公开测试版：接通设置中的手动检查更新，读取官方GitHub版本清单，提示新版并打开官方下载地址。保留数据覆盖升级；不后台检查或自动安装。"
 }
