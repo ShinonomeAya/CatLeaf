@@ -32,3 +32,8 @@
 ## 2026-10-11公开测试版追加
 
 用户明确授权“公开源码和测试候选APK（Pre-release）”。502文件独立快照提交为`203b075ebc5c2d483c5f31c9ecd05e3779719a32`，推送到[ShinonomeAya/CatLeaf](https://github.com/ShinonomeAya/CatLeaf)的main；[v0.1.22](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22)为Pre-release，含实际APK和SHA-256文件。首次[CI](https://github.com/ShinonomeAya/CatLeaf/actions/runs/38114190057)通过；APK匿名下载HTTP200、28,641,758bytes，重新下载哈希与最终本地包一致。原CatWeb的HEAD／索引／未提交修改保留，私人证据与旧历史未上传。公开测试候选不改变G7/G8结论。
+
+## 2026-10-11 README展示整理
+
+- [x] 按用户要求参考同类开源阅读器，补充正式深／浅品牌图标、六张既有公开真机截图、下载入口、快速上手、功能与数据边界、构建和反馈说明；保留准确来源／MIT及Pre-release验收结论。
+- [x] 六张图与宣传清单哈希一致，注明0.1.18拍摄版本；图片和本地链接核对，GitHub GFM渲染检查。只修改文档，App代码及0.1.22 APK不变。
