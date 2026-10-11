@@ -2,7 +2,11 @@
 
 猫页是一款暖白／森林绿风格的原生 Android RSS 阅读器。默认在本机使用，无需注册；可按需连接自有实例，配置 AI 翻译与日摘要。
 
-当前候选版本 **0.1.22（code23）**，最低 Android 10。已有定向真机与隔离验证，完整兼容、性能、升级恢复等发布验收仍未完成，G7/G8 未全部通过。源码和[问题反馈](https://github.com/ShinonomeAya/CatLeaf/issues)已公开，测试 APK 正在准备上传；候选信息见[版本材料](docs/releases/0.1.22/release.json)。
+当前公开测试版 **0.1.22（code23）**，最低 Android 10。已有定向真机与隔离验证，完整兼容、性能、升级恢复等发布验收仍未完成，G7/G8 未全部通过。
+
+[下载 Android 测试版](https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.22/catleaf-0.1.22-code23.apk) · [Pre-release 说明与校验文件](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22) · [问题反馈](https://github.com/ShinonomeAya/CatLeaf/issues/new/choose)
+
+版本、包大小和签名／SHA-256见[版本材料](docs/releases/0.1.22/release.json)。App在线检查更新服务尚未接通，请通过Releases获取新版本。
 
 ## 功能
 

@@ -3,9 +3,11 @@
   "version": "0.1.22",
   "versionCode": 23,
   "packageId": "dev.local.catleaf.nativeapp",
-  "channel": "candidate",
-  "published": false,
-  "publishedAt": null,
+  "channel": "pre-release",
+  "published": true,
+  "publishedAt": "2026-10-11T05:15:53Z",
+  "releaseUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.22",
+  "sourceCommit": "203b075ebc5c2d483c5f31c9ecd05e3779719a32",
   "minAndroid": "10",
   "minSdk": 29,
   "artifact": {
@@ -18,7 +20,7 @@
   "websiteUrl": null,
   "downloadPagePath": "/download/",
   "proposedAssetPath": "/downloads/catleaf-0.1.22-code23.apk",
-  "downloadUrl": null,
+  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.22/catleaf-0.1.22-code23.apk",
   "feedback": {
     "pagePath": "/feedback/",
     "recommendedChannel": "GitHub Issues",
@@ -28,13 +30,13 @@
   "publisher": {
     "displayName": "ShinonomeAya",
     "profileUrl": "https://github.com/ShinonomeAya",
-    "sourceRepositoryUrl": "https://github.com/ShinonomeAya/CatLeaf",
-    "proposedSourceRepositoryUrl": "https://github.com/ShinonomeAya/CatLeaf"
+    "sourceRepositoryUrl": "https://github.com/ShinonomeAya/CatLeaf"
   },
   "acceptance": {
     "G7": "not passed",
     "G8_L09": "not formally delivered"
   },
   "updateManifestPath": "/releases/latest.json",
+  "updateManifestUrl": null,
   "releaseNotes": "修正底部选中Tab文字残留的Material默认紫色，浅色及深色统一为森林绿。保留同页标题与正文双语对照、固定功能区及随文章滚动的译文状态。"
 }
