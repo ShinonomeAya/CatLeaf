@@ -243,7 +243,7 @@ fun ReadingScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                            .padding(horizontal = rootSidePadding(), vertical = 8.dp)
                             // 设计规范：网络不可用/刷新失败用警告色 + 图标 + 文字，不用错误红（旧内容仍可读）
                             .background(warningColor().copy(alpha = 0.12f), MaterialTheme.shapes.medium)
                             .padding(12.dp),
@@ -270,9 +270,9 @@ fun ReadingScreen(
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = rootSidePadding(), vertical = 4.dp),
                 )
-                if (state.allFeeds && state.refreshing) Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (state.allFeeds && state.refreshing) Row(Modifier.padding(horizontal = rootSidePadding()), verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.reading_all_refresh_progress, state.refreshCompleted, state.refreshTotal), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
                     TextButton(onClick = viewModel::stopAllRefresh) { Text(stringResource(R.string.reading_stop_refresh)) }
                 }
@@ -324,7 +324,7 @@ fun ReadingScreen(
                 item(key = "empty") {
                     // 有源但当前源/筛选下没内容：按真实原因说明，筛选在起作用时给「清除筛选」
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = rootSidePadding(), vertical = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -346,12 +346,12 @@ fun ReadingScreen(
 
             items(visible, key = { it.entity.localId }) { row ->
                 ArticleRow(row, onClick = { onOpenArticle(row.entity.localId) }, showSource = state.allFeeds)
-                Divider(modifier = Modifier.padding(start = 24.dp))
+                Divider(modifier = Modifier.padding(start = rootSidePadding()))
             }
 
             if (!state.noFeeds) item(key = "footer") {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = rootSidePadding(), vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -506,7 +506,7 @@ private fun NoFeedsEmpty(onOpenDiscovery: () -> Unit, onOpenManualAdd: () -> Uni
     // 按 App 实际主题（不是系统主题）选插画
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     Column(
-        modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = rootSidePadding()).padding(top = 24.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
@@ -621,7 +621,7 @@ private fun ArticleRow(row: ArticleFilter.LoadedRow, onClick: () -> Unit, showSo
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 14.dp),
+            .padding(horizontal = rootSidePadding(), vertical = 14.dp),
         verticalAlignment = Alignment.Top,
     ) {
         // 未读用圆点 + “未读”文字双重表达，不只依赖颜色（设计规范：状态不只靠颜色）

@@ -1,0 +1,26 @@
+{
+  "version": "0.1.24",
+  "versionCode": 25,
+  "packageId": "dev.local.catleaf.nativeapp",
+  "channel": "pre-release",
+  "published": false,
+  "publishedAt": null,
+  "releaseUrl": null,
+  "downloadUrl": null,
+  "sourceCommit": null,
+  "minSdk": 29,
+  "targetSdk": 36,
+  "artifact": {
+    "fileName": "catleaf-0.1.24-code25.apk",
+    "bytes": 28641842,
+    "sha256": "0b79af94227a7387440f614e00fa6182e95d03d63947a6057adac2f63ae72b8e",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "builtAt": "2026-10-13"
+  },
+  "releaseNotes": "统一三根页内容边距与列表标题，补齐共享说明字号，调整底栏高度并适配系统大字。",
+  "acceptance": {
+    "scope": "targeted visual alignment; isolated eight-configuration captures and data-preserving physical-device Release checks",
+    "G7": "not passed",
+    "G8_L09": "not formally delivered"
+  }
+}

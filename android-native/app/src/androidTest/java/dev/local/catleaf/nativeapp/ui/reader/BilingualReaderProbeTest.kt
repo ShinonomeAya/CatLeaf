@@ -124,7 +124,8 @@ class BilingualReaderProbeTest {
     private fun visibleNode(node: AccessibilityNodeInfo?, text: String): AccessibilityNodeInfo? {
         if (node == null) return null
         val bounds = Rect().also { node.getBoundsInScreen(it) }
-        if (node.text?.toString() == text && node.isVisibleToUser && !bounds.isEmpty) return node
+        // WebView can report an offscreen control as a visible 1px CSS sliver.
+        if (node.text?.toString() == text && node.isVisibleToUser && bounds.height() > app.resources.displayMetrics.density) return node
         return (0 until node.childCount).firstNotNullOfOrNull { visibleNode(node.getChild(it), text) }
     }
 

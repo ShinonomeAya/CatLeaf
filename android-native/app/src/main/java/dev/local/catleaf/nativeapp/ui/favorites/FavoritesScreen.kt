@@ -114,7 +114,7 @@ fun FavoritesScreen(
             }
 
             state.notConnected -> Box(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = rootSidePadding(), vertical = 24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -125,7 +125,7 @@ fun FavoritesScreen(
             }
 
             state.error != null -> Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = rootSidePadding(), vertical = 24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -135,7 +135,7 @@ fun FavoritesScreen(
             }
 
             state.rows.isEmpty() -> Column(
-                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = rootSidePadding(), vertical = 24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -160,7 +160,7 @@ fun FavoritesScreen(
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                 items(state.rows, key = { it.localId }) { row ->
                     FavoriteItem(row, onClick = { onOpenArticle(row.localId) })
-                    Divider(modifier = Modifier.padding(start = 24.dp))
+                    Divider(modifier = Modifier.padding(start = rootSidePadding()))
                 }
                 item(key = "hint") {
                     Text(
@@ -168,7 +168,7 @@ fun FavoritesScreen(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = rootSidePadding(), vertical = 24.dp),
                     )
                 }
             }
@@ -182,13 +182,13 @@ private fun FavoriteItem(row: FavoriteRow, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 14.dp),
+            .padding(horizontal = rootSidePadding(), vertical = 14.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = row.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )

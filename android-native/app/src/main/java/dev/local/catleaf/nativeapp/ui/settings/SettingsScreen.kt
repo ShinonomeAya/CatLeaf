@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import dev.local.catleaf.nativeapp.ui.theme.ControlShape
 import dev.local.catleaf.nativeapp.ui.theme.RootHeader
+import dev.local.catleaf.nativeapp.ui.theme.rootSidePadding
 import dev.local.catleaf.nativeapp.R
 import dev.local.catleaf.nativeapp.data.local.CatLeafDatabase
 import dev.local.catleaf.nativeapp.data.offline.OfflinePackageStore
@@ -306,7 +307,7 @@ fun SettingsScreen(
 /** 分组：小号灰色组名在上（原型 07），行本身平铺，不包卡片 */
 @Composable
 private fun SettingsGroup(title: String, content: @Composable () -> Unit) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp)) {
+    Column(modifier = Modifier.padding(horizontal = rootSidePadding()).padding(top = 8.dp)) {
         Text(
             title,
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
