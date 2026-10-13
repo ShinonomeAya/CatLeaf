@@ -10,15 +10,15 @@
 <p>把喜欢的订阅，留给安静的阅读。</p>
 <p>本机优先的 Android RSS 阅读器 · 暖白与森林绿 · 无需注册</p>
 
-[![Android 10+](https://img.shields.io/badge/Android-10%2B-356A52)](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23) [![MIT License](https://img.shields.io/badge/License-MIT-356A52)](LICENSE) [![CI](https://github.com/ShinonomeAya/CatLeaf/actions/workflows/ci.yml/badge.svg)](https://github.com/ShinonomeAya/CatLeaf/actions/workflows/ci.yml)
+[![Android 10+](https://img.shields.io/badge/Android-10%2B-356A52)](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.24) [![MIT License](https://img.shields.io/badge/License-MIT-356A52)](LICENSE) [![CI](https://github.com/ShinonomeAya/CatLeaf/actions/workflows/ci.yml/badge.svg)](https://github.com/ShinonomeAya/CatLeaf/actions/workflows/ci.yml)
 
-**[下载 Android 测试版](https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.23/catleaf-0.1.23-code24.apk)** · [发布说明](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23) · [使用指南](docs/14-本机使用与实例帮助.md) · [反馈问题](https://github.com/ShinonomeAya/CatLeaf/issues/new/choose)
+**[下载 Android 测试版](https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.24/catleaf-0.1.24-code25.apk)** · [发布说明](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.24) · [使用指南](docs/14-本机使用与实例帮助.md) · [反馈问题](https://github.com/ShinonomeAya/CatLeaf/issues/new/choose)
 
 </div>
 
 猫页把订阅、阅读、搜索与收藏放在同一个地方。添加喜欢的 RSS／Atom 源，就可以在手机上阅读；全文获取、单篇图文离线和 AI 双语对照按需使用。普通阅读无需配置 AI，也无需部署服务器。
 
-> 当前为 **0.1.23 公开测试版**。版本说明与已知问题请查看 [Releases](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23) 和 [Issues](https://github.com/ShinonomeAya/CatLeaf/issues)。
+> 当前为 **0.1.24 公开测试版**。版本说明与已知问题请查看 [Releases](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.24) 和 [Issues](https://github.com/ShinonomeAya/CatLeaf/issues)。
 
 ## 界面预览
 
@@ -72,13 +72,13 @@
 
 | 项目 | 当前测试版 |
 | --- | --- |
-| 版本 | 0.1.23 · Pre-release 测试版 |
+| 版本 | 0.1.24 · Pre-release 测试版 |
 | 系统 | Android 10 及以上 |
 | 安装包 | 28.64 MB |
 
-从[GitHub Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23)下载安装 APK，按 Android 的提示完成安装。已有猫页请使用同包名、同签名且版本号更高的 APK **覆盖升级**，保留原数据。
+从[GitHub Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.24)下载安装 APK，按 Android 的提示完成安装。已有猫页请使用同包名、同签名且版本号更高的 APK **覆盖升级**，保留原数据。
 
-校验文件、签名和本版说明见 [Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.23)。可在“设置→检查更新”手动查询新版；0.1.22及更早版本首次需要手动下载安装0.1.23。
+校验文件、签名和本版说明见 [Release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.24)。可在“设置→检查更新”手动查询新版；0.1.22及更早版本首次需要手动下载安装当前测试版。
 
 ## 开始阅读
 
