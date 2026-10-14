@@ -4,12 +4,14 @@
   "packageName": "dev.local.catleaf.nativeapp",
   "minSdk": 29,
   "targetSdk": 36,
-  "status": "candidate-not-published",
+  "status": "published-pre-release",
   "apk": {
     "path": "F:\\sokusai\\CatLeaf-release-candidate\\2026-10-14\\catleaf-0.1.28-code29.apk",
     "bytes": 28804534,
     "sha256": "22837bfe00570e42539e91820eff2f2d700edc0a405ae5c6854fc5d9ed64dbf6",
-    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "url": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.28/catleaf-0.1.28-code29.apk",
+    "checksumUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.28/catleaf-0.1.28-code29.sha256"
   },
   "validation": {
     "unitTests": 207,
@@ -23,10 +25,14 @@
     "opmlIsolatedAndroid10Tests": 23,
     "targetedRetryUnitTests": 6,
     "isolatedWebView": "74.0.3729.185",
-    "physicalThisVersion": false,
+    "physicalThisVersion": true,
     "aiRequestsThisVersion": 0,
     "fullG7": false,
-    "formalG8": false
+    "formalG8": false,
+    "physicalScope": "Android 16 signed 0.1.27 to 0.1.28 upgrade; installed APK hash verified; 6 feeds/1 favorite/filter state retained; existing article and AI cache, citation fold/expand/source paragraph 5/return, about/version and manual update check",
+    "anonymousAssetsVerified": true,
+    "onlineManifestVerified": true,
+    "physicalCheckUpdate": "current-version-0.1.28"
   },
   "previousValidation": {
     "version": "0.1.27",
@@ -34,10 +40,18 @@
     "description": "Prior AI prompt/layout and physical tests are historical evidence; they do not replace physical acceptance of this APK."
   },
   "pending": [
-    "physical OPML targeted retry and signed upgrade verification for 0.1.28",
+    "physical OPML targeted retry with real user OPML samples for 0.1.28",
     "F09 commenter sample and volunteer trials",
     "additional article types and OEM/WebView selected-text model coverage",
     "original complete G7/G8 and browser/system installation-chain gaps"
   ],
-  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-source-0.1.27"
+  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-source-0.1.27",
+  "sourceCommit": "7aa5e6783a24be1578fd1bf2375163ba650e4ab4",
+  "publication": {
+    "tag": "v0.1.28",
+    "url": "https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.28",
+    "publishedAt": "2026-10-14T12:54:23Z",
+    "prerelease": true
+  },
+  "publicationEvidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-publish-0.1.28"
 }

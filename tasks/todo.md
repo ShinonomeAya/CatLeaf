@@ -100,3 +100,10 @@
 - [x] 新增3项有效JVM回归及真实Compose第201行点击回归；最终207单元/33套件与四项wrapper通过，lint0错误/29警告/2提示，Android10隔离23项OPML通过。
 - [x] 0.1.28/code29本机候选APK及[签名/哈希清单](../docs/releases/0.1.28/release.json)已准备；README区分最新源码与0.1.24公开下载。原0.1.27证据保留，0.1.28没有新真机或AI验收，不改变APK Release/latest。
 - [ ] 0.1.28定向真机/同签名升级、F09和原完整G7/G8及公开安装链继续待验证；本次源码推送不是正式G8交付。
+
+### 2026-10-14 0.1.28 APK与更新清单已公开
+
+- [x] 用户授权的[0.1.28/code29 Pre-release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.28)发布APK与独立SHA-256文件；标签锁定源码7aa5e678，匿名下载/大小/版本/包名/签名/哈希一致。
+- [x] 本版同签名真机保数据升级；6订阅/1收藏、国家地理已有文章/AI缓存/依据收展/第5段定位/返回、版本显示和推进后的检查更新通过，0次AI请求；充电亮屏恢复0并回桌面，原始资料在仓库外。
+- [x] [latest.json](../docs/releases/latest.json)推进0.1.28/code29，README下载与[发布元数据](../docs/releases/0.1.28/release.json)同步；本版207项JVM、23项Android10隔离OPML及lint/构建证据保留。
+- [ ] 真机OPML定向重试/评论样本、F09、更多OEM/选文模型、完整G7/G8及浏览器/系统安装全链仍待验证。公开测试版不代表正式G8/L09。详见[最新验收追加](../docs/validation/验收记录.md)。
