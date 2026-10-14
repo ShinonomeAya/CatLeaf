@@ -23,8 +23,8 @@ android {
         applicationId = "dev.local.catleaf.nativeapp"
         minSdk = 29
         targetSdk = 36
-        versionCode = 25
-        versionName = "0.1.24"
+        versionCode = 29
+        versionName = "0.1.28"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 两阶段探针（跨进程持久化）依赖人工分次运行，默认套件跳过

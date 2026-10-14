@@ -12,6 +12,16 @@ import org.junit.Test
  */
 class ReaderCoverAndHeaderTest {
 
+    @Test fun paragraph_jumps_only_stay_within_the_current_controlled_document() {
+        val page = ReaderAssets.PAGE_URL + "?render=test"
+        assertTrue(isLocalParagraphJump(page, "$page#catleaf-b1"))
+        assertTrue(isLocalParagraphJump("$page#catleaf-b1", "$page#catleaf-title"))
+        assertFalse(isLocalParagraphJump(page, ReaderAssets.PAGE_URL + "?render=other#catleaf-b1"))
+        assertFalse(isLocalParagraphJump(page, "$page#catleaf-b0"))
+        assertFalse(isLocalParagraphJump(page, "https://evil.example/#catleaf-b1"))
+        assertFalse(isLocalParagraphJump("https://evil.example/", "https://evil.example/#catleaf-b1"))
+    }
+
     @Test
     fun cover_requires_safe_https() {
         val url = "https://blog.example.org/img/cover.png"

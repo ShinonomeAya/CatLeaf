@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import dev.local.catleaf.nativeapp.data.ai.Translator
 import dev.local.catleaf.nativeapp.data.ai.BilingualArticle
+import dev.local.catleaf.nativeapp.data.ai.ArticleAssistant
 import dev.local.catleaf.nativeapp.data.article.ArticleIdentity
 import dev.local.catleaf.nativeapp.data.article.ArticleMerger
 import dev.local.catleaf.nativeapp.data.article.ArticleSanitizer
@@ -98,6 +99,8 @@ data class ReaderUiState(
     val feedback: ReaderFeedback? = null,
     val offlineSnapshot: OfflinePackageStore.Snapshot? = null,
     val savingOffline: Boolean = false,
+    val aiReading: AiReadingUiState = AiReadingUiState(),
+    val paragraphJump: ParagraphJump? = null,
 ) {
     /** 有正文可以离线读 */
     val hasText: Boolean get() = bodyHtml != null && source != ContentSource.None
@@ -149,11 +152,15 @@ class ReaderViewModel @JvmOverloads constructor(
     private val db: CatLeafDatabase = CatLeafDatabase.get(application),
     private val fullTextExtractor: FullTextExtractor? = null,
     private val translationService: Translator? = null,
+    private val readingService: ArticleAssistant? = null,
 ) : AndroidViewModel(application) {
     private val settings = SettingsStore(application)
     private val offlineStore = OfflinePackageStore(application, db)
     private var offlineJob: Job? = null
     private var offlineSaveScope: String? = null
+    private val assistant by lazy { readingService ?: ArticleAssistant(db.aiCache()) }
+    private var readingJob: Job? = null
+    private var readingTicket: Any? = null
 
     private var extractor: FullTextExtractor? = null
     private var extractorKey: String? = null
@@ -182,6 +189,10 @@ class ReaderViewModel @JvmOverloads constructor(
                     snap.currentInstanceKey.orEmpty()
                 } else dev.local.catleaf.nativeapp.data.settings.LOCAL_SCOPE_KEY
                 if (offlineSaveScope != null && offlineSaveScope != key) offlineJob?.cancel()
+                if (currentScope != null && currentScope != key) {
+                    closeAiReading()
+                    _state.value = _state.value.copy(aiReading = AiReadingUiState(), paragraphJump = null)
+                }
             }
         }
     }
@@ -234,6 +245,8 @@ class ReaderViewModel @JvmOverloads constructor(
 
     /** 打开一篇文章：正文与状态全部来自本地，不发网络请求 */
     fun open(localId: String) {
+        readingTicket = null
+        readingJob?.cancel()
         val revision = ++readerRevision
         currentLocalId = localId
         currentScope = null
@@ -579,6 +592,137 @@ class ReaderViewModel @JvmOverloads constructor(
         _state.value = _state.value.copy(showTranslation = true)
     }
 
+    fun openAiReading() {
+        _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(open = true))
+        loadAiReadingCache()
+    }
+
+    fun openAiReadingForSelection(text: String, localId: String, bodyHash: String) {
+        val scope = currentScope ?: return
+        val revision = readerRevision
+        viewModelScope.launch {
+            val config = settings.current()
+            if (!isCurrent(localId, scope, revision)) return@launch
+            val snapshot = _state.value
+            if (snapshot.bodyHash != bodyHash || snapshot.loading || snapshot.showTranslation) return@launch
+            val block = BilingualArticle.fromHtml(snapshot.bodyHtml.orEmpty(), snapshot.title).selectionBlock(text)
+            closeAiReading()
+            _state.value = _state.value.copy(aiReading = AiReadingUiState(
+                open = true, mode = ArticleAssistant.Mode.Explain, paragraphId = block?.id,
+                selection = if (block != null) text else "",
+                baseUrl = config.aiBaseUrl.orEmpty(), model = config.aiModel.orEmpty(),
+                notice = if (block == null) "请选择单个原文段落中的文字，或在下方选择段落" else null,
+            ))
+            if (block != null) loadAiReadingCache()
+        }
+    }
+
+    fun closeAiReading() {
+        readingTicket = null
+        readingJob?.cancel()
+        _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(open = false, busy = false))
+    }
+
+    fun selectAiReadingMode(mode: ArticleAssistant.Mode) {
+        if (_state.value.aiReading.busy) return
+        _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(mode = mode, answer = null, notice = null, cached = false))
+        loadAiReadingCache()
+    }
+
+    fun setAiQuestion(question: String) {
+        if (_state.value.aiReading.busy || question.length > ArticleAssistant.MAX_QUESTION_CHARS) return
+        readingTicket = null
+        _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(question = question, answer = null, cached = false, notice = null))
+        if (_state.value.aiReading.baseUrl.isBlank() || _state.value.aiReading.model.isBlank()) loadAiReadingCache()
+    }
+
+    fun selectAiParagraph(id: String) {
+        if (_state.value.aiReading.busy) return
+        _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(paragraphId = id, selection = "", answer = null, cached = false, notice = null))
+        loadAiReadingCache()
+    }
+
+    private fun readingRequest(snapshot: ReaderUiState, scope: String, id: String, base: String, model: String) = ArticleAssistant.Request(
+        scope, id, BilingualArticle.fromHtml(snapshot.bodyHtml.orEmpty(), snapshot.title), snapshot.source.name,
+        snapshot.aiReading.mode, snapshot.aiReading.question, snapshot.aiReading.paragraphId,
+        base, model, selection = snapshot.aiReading.selection,
+    )
+
+    private fun loadAiReadingCache() {
+        val id = currentLocalId ?: return
+        val scope = currentScope ?: return
+        val revision = readerRevision
+        val snapshot = _state.value
+        val ticket = Any().also { readingTicket = it }
+        readingJob = viewModelScope.launch {
+            val config = settings.current()
+            val request = readingRequest(snapshot, scope, id, config.aiBaseUrl.orEmpty(), config.aiModel.orEmpty())
+            val cache = runCatching { assistant.cached(request) }
+            if (readingTicket !== ticket || !isCurrent(id, scope, revision)) return@launch
+            _state.value = _state.value.copy(aiReading = _state.value.aiReading.copy(
+                baseUrl = request.baseUrl, model = request.model, answer = cache.getOrNull(), cached = cache.getOrNull() != null,
+                notice = if (cache.isFailure) "无法读取AI缓存，尚未请求供应商" else null,
+            ))
+        }
+    }
+
+    fun generateAiReading(force: Boolean = false) {
+        val id = currentLocalId ?: return
+        val scope = currentScope ?: return
+        val revision = readerRevision
+        val snapshot = _state.value
+        if (!snapshot.aiReading.open || snapshot.aiReading.busy) return
+        val ticket = Any().also { readingTicket = it }
+        _state.value = snapshot.copy(aiReading = snapshot.aiReading.copy(busy = true, notice = null))
+        readingJob = viewModelScope.launch {
+            try {
+                val config = settings.current()
+                val request = readingRequest(snapshot, scope, id, config.aiBaseUrl.orEmpty(), config.aiModel.orEmpty())
+                if (readingTicket !== ticket || !isCurrent(id, scope, revision)) return@launch
+                val cache = if (force) null else assistant.cached(request)
+                val outcome = when {
+                    cache != null -> ArticleAssistant.Outcome.Complete(cache, true)
+                    !snapshot.isOnline -> ArticleAssistant.Outcome.Blocked("离线：可读已有AI缓存，新请求需要联网")
+                    request.baseUrl != snapshot.aiReading.baseUrl || request.model != snapshot.aiReading.model ->
+                        ArticleAssistant.Outcome.Blocked("AI配置已改变，请重新打开面板核对模型")
+                    else -> {
+                        val policy = ensureAiConfig()
+                        if (readingTicket !== ticket || !isCurrent(id, scope, revision)) return@launch
+                        if (policy != null && (policy.baseUrl != request.baseUrl || policy.model != request.model || policy.instanceKey != scope)) {
+                            ArticleAssistant.Outcome.Blocked("AI配置已改变，请重新打开面板核对模型")
+                        } else assistant.run(request.copy(apiKey = policy?.apiKey.orEmpty()), force)
+                    }
+                }
+                if (readingTicket !== ticket || !isCurrent(id, scope, revision)) return@launch
+                val current = _state.value.aiReading
+                _state.value = _state.value.copy(aiReading = when (outcome) {
+                    is ArticleAssistant.Outcome.Complete -> current.copy(busy = false, answer = outcome.answer, cached = outcome.cached, notice = null)
+                    is ArticleAssistant.Outcome.Blocked -> current.copy(busy = false, notice = outcome.reason)
+                    is ArticleAssistant.Outcome.Failed -> current.copy(busy = false, notice = outcome.reason)
+                    is ArticleAssistant.Outcome.Incomplete -> current.copy(busy = false, notice = outcome.reason)
+                })
+            } catch (error: Exception) {
+                if (error is kotlinx.coroutines.CancellationException) throw error
+                if (readingTicket === ticket && isCurrent(id, scope, revision)) _state.value = _state.value.copy(
+                    aiReading = _state.value.aiReading.copy(busy = false, notice = "${AI_READING_TITLE}暂不可用，原有结果已保留"),
+                )
+            }
+        }
+    }
+
+    fun jumpToAiSource(id: String) {
+        val snapshot = _state.value
+        val answer = snapshot.aiReading.answer ?: return
+        val cited = answer.sourceIds + answer.points.flatMap { it.sourceIds }
+        if (id !in cited || BilingualArticle.fromHtml(snapshot.bodyHtml.orEmpty(), snapshot.title).blocks.none { it.id == id }) return
+        closeAiReading()
+        _state.value = _state.value.copy(showTranslation = false, paragraphJump = ParagraphJump(id))
+    }
+
+    fun consumeParagraphJump(requestId: Long) {
+        if (_state.value.paragraphJump?.requestId == requestId) _state.value = _state.value.copy(paragraphJump = null)
+    }
+
     private suspend fun cachedTranslation(localId: String, plainText: String, body: String?, title: String): Translator.Outcome.Cached? {
         val config = ensureAiConfig() ?: return null
         return ensureTranslator()?.cached(Translator.Request(
@@ -606,7 +750,7 @@ class ReaderViewModel @JvmOverloads constructor(
         val baseUrl = snapshot.aiBaseUrl.orEmpty()
         val model = snapshot.aiModel.orEmpty()
         if (baseUrl.isBlank() || model.isBlank()) return null
-        val apiKey = runCatching { CredentialStore(getApplication()).get(CredentialStore.AI_KEY) }
+        val apiKey = runCatching { CredentialStore(getApplication()).getAiKey(baseUrl) }
             .getOrNull()
             .orEmpty()
         if (apiKey.isBlank()) return null
@@ -701,6 +845,8 @@ class ReaderViewModel @JvmOverloads constructor(
                     }
                     if (!isCurrent(targetId, scope, revision)) return@launch
                     val appliedRevision = ++readerRevision
+                    readingTicket = null
+                    readingJob?.cancel()
                     currentPlainText = sanitized.plainText
                     currentTextLength = sanitized.textLength
                     val cached = cachedTranslation(targetId, sanitized.plainText, sanitized.html, snapshot.title)
@@ -720,6 +866,8 @@ class ReaderViewModel @JvmOverloads constructor(
                             translating = false,
                             offlineSnapshot = null,
                             bodyHash = ArticleIdentity.contentFingerprint(sanitized.html),
+                            aiReading = AiReadingUiState(),
+                            paragraphJump = null,
                             // 页首封面与正文开头的同图已在净化时去重。
                             coverUrl = cover,
                             source = ContentSource.Extracted,

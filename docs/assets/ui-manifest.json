@@ -365,6 +365,16 @@
       "sha256": "52eb60024bb2d8c9264443f1585b1255fbec41773037922dcb4e8598cf7ed7c7",
       "modified": true,
       "change": "Only root fill changed from none to currentColor"
+    },
+    {
+      "file": "ui/ai-reading.svg",
+      "component": "CatLeaf AI Reading",
+      "label": "AI辅助阅读、选文辅助",
+      "pages": "02",
+      "source": "CatLeaf original design",
+      "license": "../../LICENSE",
+      "sha256": "128b00171f36d80ff0c9048fd036bc2bd0288d26e147246d1c862ec82eddfea1",
+      "modified": false
     }
   ]
 }

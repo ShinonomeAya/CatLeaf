@@ -1,0 +1,35 @@
+{
+  "versionName": "0.1.25",
+  "versionCode": 26,
+  "status": "historical-candidate-superseded-by-0.1.26",
+  "apk": {
+    "path": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-opml-ai-reading\\candidate-before-selection.apk",
+    "bytes": 28771150,
+    "sha256": "701484a27719f2c51cbc15c802ea998ff11fc43027f8bd0563607c5285825538",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+  },
+  "validation": {
+    "unitTests": 203,
+    "unitSuites": 33,
+    "unitFailures": 0,
+    "unitErrors": 0,
+    "unitSkipped": 0,
+    "lintErrors": 0,
+    "lintWarnings": 27,
+    "lintHints": 2,
+    "isolatedAndroid10Tests": 63,
+    "nativeMatrixGroups": 8,
+    "nativeScreenshots": 48,
+    "deepSeekSyntheticRequests": 10,
+    "physicalDevice": "Android16 test phone A, same-signer data-preserving release install",
+    "physicalAiRequests": 0,
+    "fullG7": false,
+    "formalG8": false
+  },
+  "pending": [
+    "F09 commenter failure sample",
+    "F09 3-5 volunteer trials deferred by user",
+    "original complete G7/G8 and installation-chain gaps"
+  ],
+  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-opml-ai-reading\\"
+}

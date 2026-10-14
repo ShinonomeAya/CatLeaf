@@ -248,6 +248,7 @@ class ArticleBodyWebViewClient(
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
         val url = request.url.toString()
+        if (isLocalParagraphJump(view.url, url)) return false
         if (EndpointPolicy.isSafePublicUrl(url)) {
             onExternalUrl(url)
         } else {
@@ -297,6 +298,13 @@ class ArticleBodyWebViewClient(
             </svg>
         """.trimIndent()
     }
+}
+
+/** 仅在同一本地受控文档内定位；其他URL仍由原有外链策略处理。 */
+internal fun isLocalParagraphJump(currentUrl: String?, target: String): Boolean {
+    val base = currentUrl?.substringBefore('#') ?: return false
+    return base.startsWith(ReaderAssets.PAGE_URL + "?render=") && target.substringBefore('#') == base &&
+        target.substringAfter('#', "").matches(Regex("catleaf-(?:title|b[1-9][0-9]*)"))
 }
 
 /**
@@ -351,6 +359,9 @@ fun ArticleBodyView(
     modifier: Modifier = Modifier,
     /** Layout identity separates original and bilingual scroll heights without changing source data. */
     displayKey: String = "original",
+    paragraphJump: ParagraphJump? = null,
+    onParagraphJumped: (Long) -> Unit = {},
+    onAiSelection: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val publicFetch = remember { PublicFetch() }
@@ -363,6 +374,19 @@ fun ArticleBodyView(
     val pendingRestore = remember { mutableStateOf(scrollAnchor) }
     val scrollReporter = rememberUpdatedState(onScrollPosition)
     val holder = remember { WebViewHolder() }
+    val jump = rememberUpdatedState(paragraphJump)
+    val jumpReporter = rememberUpdatedState(onParagraphJumped)
+    fun applyJump() {
+        val request = jump.value ?: return
+        val view = holder.view ?: return
+        val target = "$pageUrl#${request.id}"
+        if (!holder.loaded || holder.pageUrl != pageUrl || !isLocalParagraphJump(pageUrl, target)) return
+        holder.restoreTick?.let(view::removeCallbacks)
+        pendingRestore.value = null
+        view.loadUrl(target)
+        jumpReporter.value(request.requestId)
+    }
+    LaunchedEffect(paragraphJump, pageUrl) { applyJump() }
     LaunchedEffect(scrollAnchor) {
         pendingRestore.value = scrollAnchor
         val view = holder.view
@@ -393,6 +417,7 @@ fun ArticleBodyView(
                                 holder.restoreTick = applyScrollRestore(view, anchor)
                             }
                             pendingRestore.value = null
+                            applyJump()
                         }
                     })
                 }
@@ -403,6 +428,7 @@ fun ArticleBodyView(
     DisposableEffect(Unit) {
         onDispose {
             holder.view?.let { view ->
+                holder.selectionCleanup?.invoke()
                 holder.pendingReport?.let(view::removeCallbacks)
                 holder.scrollListener?.let(view.viewTreeObserver::removeOnScrollChangedListener)
                 holder.restoreTick?.let(view::removeCallbacks)
@@ -423,10 +449,20 @@ fun ArticleBodyView(
     AndroidView(
         modifier = modifier.fillMaxSize(),
         factory = { ctx ->
-            WebView(ctx).also { view ->
+            object : WebView(ctx) {
+                override fun startActionMode(callback: android.view.ActionMode.Callback, type: Int): android.view.ActionMode? =
+                    super.startActionMode(
+                        if (type == android.view.ActionMode.TYPE_FLOATING && callback is android.view.ActionMode.Callback2)
+                            articleSelectionActionMode(callback) else callback,
+                        type,
+                    )
+            }.also { view ->
                 configureArticleWebView(view, ctx)
                 view.webViewClient = client
                 view.loadUrl(pageUrl)
+                holder.selectionCleanup = onAiSelection?.let { callback -> attachArticleSelectionAi(view) { text ->
+                    if (holder.loaded && holder.pageUrl == pageUrl) callback(text)
+                } }
                 val pending = Runnable {
                     lastScrollReport[0] = android.os.SystemClock.uptimeMillis()
                     if (holder.loaded) scrollReporter.value?.invoke(view.scrollY, view.contentHeight)
@@ -451,6 +487,10 @@ fun ArticleBodyView(
         update = { view ->
             // 正文变了（例如获取全文成功）：换掉资源提供者并重新加载，不重建 WebView
             if (view.webViewClient !== client) {
+                holder.selectionCleanup?.invoke()
+                holder.selectionCleanup = onAiSelection?.let { callback -> attachArticleSelectionAi(view) { text ->
+                    if (holder.loaded && holder.pageUrl == pageUrl) callback(text)
+                } }
                 if (holder.loaded && view.contentHeight > 0) {
                     val current = ScrollAnchor.ReaderAnchor("reader", holder.displayKey, view.scrollY, view.contentHeight)
                     holder.positions[holder.displayKey] = current
@@ -526,4 +566,5 @@ private class WebViewHolder {
     var scrollListener: ViewTreeObserver.OnScrollChangedListener? = null
     var pendingReport: Runnable? = null
     var restoreTick: Runnable? = null
+    var selectionCleanup: (() -> Unit)? = null
 }

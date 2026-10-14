@@ -1,0 +1,43 @@
+{
+  "versionName": "0.1.28",
+  "versionCode": 29,
+  "packageName": "dev.local.catleaf.nativeapp",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "status": "candidate-not-published",
+  "apk": {
+    "path": "F:\\sokusai\\CatLeaf-release-candidate\\2026-10-14\\catleaf-0.1.28-code29.apk",
+    "bytes": 28804534,
+    "sha256": "22837bfe00570e42539e91820eff2f2d700edc0a405ae5c6854fc5d9ed64dbf6",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73"
+  },
+  "validation": {
+    "unitTests": 207,
+    "unitSuites": 33,
+    "unitFailures": 0,
+    "unitErrors": 0,
+    "unitSkipped": 0,
+    "lintErrors": 0,
+    "lintWarnings": 29,
+    "lintHints": 2,
+    "opmlIsolatedAndroid10Tests": 23,
+    "targetedRetryUnitTests": 6,
+    "isolatedWebView": "74.0.3729.185",
+    "physicalThisVersion": false,
+    "aiRequestsThisVersion": 0,
+    "fullG7": false,
+    "formalG8": false
+  },
+  "previousValidation": {
+    "version": "0.1.27",
+    "apkSha256": "bd9b6db0bc75abc3964bb26ec5364322ee181dc4e537ba4d4a175ab552d6ddff",
+    "description": "Prior AI prompt/layout and physical tests are historical evidence; they do not replace physical acceptance of this APK."
+  },
+  "pending": [
+    "physical OPML targeted retry and signed upgrade verification for 0.1.28",
+    "F09 commenter sample and volunteer trials",
+    "additional article types and OEM/WebView selected-text model coverage",
+    "original complete G7/G8 and browser/system installation-chain gaps"
+  ],
+  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-source-0.1.27"
+}

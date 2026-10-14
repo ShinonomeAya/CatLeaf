@@ -176,7 +176,7 @@ fun ReadingScreen(
                                 is ArticleFilter.DateScope.On -> s.localDate
                                 else -> null
                             }
-                            val openDigest = { if (state.allFeeds) showSourcePanel = true else onOpenDigest(state.currentFeedId, digestDate) }
+                            val openDigest = { onOpenDigest(if (state.allFeeds) null else state.currentFeedId, digestDate) }
                             if (compactActions) IconButton(onClick = openDigest) {
                                 Icon(painterResource(R.drawable.ic_calendar_days), contentDescription = stringResource(R.string.reading_daily_digest))
                             } else TextButton(onClick = openDigest) {

@@ -49,8 +49,8 @@ class BilingualReaderProbeTest {
     private lateinit var db: CatLeafDatabase
     private lateinit var vm: ReaderViewModel
     private lateinit var previous: SettingsStore.Snapshot
-    private val credentialFile = File(app.noBackupFilesDir, "credentials/ai_key.bin")
     private var previousCiphertext: ByteArray? = null
+    private var previousOrigin: ByteArray? = null
     private var previousAccessibilityFlags = 0
     private val english = "Birds arrive in the garden every morning. The original paragraph stays here, with its link and formatting."
     private val chinese = "每天早晨，鸟儿都会来到花园。译文位于对应的原文下面，原有链接与排版继续保留。"
@@ -69,12 +69,13 @@ class BilingualReaderProbeTest {
             flags = flags or android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
         previous = settings.current()
-        previousCiphertext = credentialFile.takeIf { it.exists() }?.readBytes()
+        previousCiphertext = CredentialStore(app).ciphertext(CredentialStore.AI_KEY)
+        previousOrigin = CredentialStore(app).ciphertext(CredentialStore.AI_KEY_ORIGIN)
         settings.setActiveScopeKind(SCOPE_KIND_LOCAL)
         settings.setAiConfig(base, "bilingual-isolated")
         settings.setBodyFontSize(18)
         settings.setReaderPosition(null)
-        CredentialStore(app).put(CredentialStore.AI_KEY, "NOT-A-REAL-KEY-bilingual-probe")
+        CredentialStore(app).putAiKey(base, "NOT-A-REAL-KEY-bilingual-probe")
         db = Room.inMemoryDatabaseBuilder(app, CatLeafDatabase::class.java).build()
         val sanitized = ArticleSanitizer.sanitize(body, "https://example.org/story")
         db.articles().upsertArticle(ArticleEntity("bilingual-probe", LOCAL_SCOPE_KEY, "fixture", "fixture", "https://example.org/story",
@@ -109,7 +110,8 @@ class BilingualReaderProbeTest {
         settings.setCurrentInstanceKey(previous.currentInstanceKey)
         settings.setBodyFontSize(previous.bodyFontSizeSp)
         settings.setReaderPosition(previous.readerPosition)
-        previousCiphertext?.let { credentialFile.writeBytes(it) } ?: CredentialStore(app).delete(CredentialStore.AI_KEY)
+        CredentialStore(app).restoreCiphertext(CredentialStore.AI_KEY, previousCiphertext)
+        CredentialStore(app).restoreCiphertext(CredentialStore.AI_KEY_ORIGIN, previousOrigin)
         CurrentBody.localId = null
         db.close()
     }
@@ -124,8 +126,8 @@ class BilingualReaderProbeTest {
     private fun visibleNode(node: AccessibilityNodeInfo?, text: String): AccessibilityNodeInfo? {
         if (node == null) return null
         val bounds = Rect().also { node.getBoundsInScreen(it) }
-        // WebView can report an offscreen control as a visible 1px CSS sliver.
-        if (node.text?.toString() == text && node.isVisibleToUser && bounds.height() > app.resources.displayMetrics.density) return node
+        // Chromium can report an offscreen control as a visible sliver of up to two CSS pixels.
+        if (node.text?.toString() == text && node.isVisibleToUser && bounds.height() > app.resources.displayMetrics.density * 2) return node
         return (0 until node.childCount).firstNotNullOfOrNull { visibleNode(node.getChild(it), text) }
     }
 
@@ -158,13 +160,13 @@ class BilingualReaderProbeTest {
         assertEquals(before.bodyHash, vm.state.value.bodyHash)
         if (capture) capture("bilingual-top")
         rule.onRoot().performTouchInput {
-            swipe(Offset(center.x, height * .8f), Offset(center.x, height * .4f), 800)
+            swipe(Offset(center.x, height * .8f), Offset(center.x, height * .25f), 800)
         }
         Thread.sleep(1200)
+        if (capture) capture("bilingual-body")
         assertNull("Status action must leave the viewport with the article", visibleNode("重新翻译"))
         rule.onNodeWithText("原文").assertExists()
         rule.onNodeWithText("双语对照").assertExists()
-        if (capture) capture("bilingual-body")
         rule.onNodeWithText("原文").performClick()
         rule.waitUntil(10000) { !windowText().contains(chinese) }
         assertFalse(vm.state.value.showTranslation)

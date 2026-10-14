@@ -3,6 +3,8 @@ package dev.local.catleaf.nativeapp.data.security
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.AtomicFile
+import dev.local.catleaf.nativeapp.data.network.EndpointPolicy
 import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -40,14 +42,41 @@ class CredentialStore(private val context: Context) {
         payload[0] = iv.size.toByte()
         iv.copyInto(payload, 1)
         ciphertext.copyInto(payload, 1 + iv.size)
-        fileFor(name).writeBytes(payload)
+        writeCiphertext(name, payload)
+    }
+
+    /** 供应商绑定也是私有密文；更新时先阻止旧端点继续读取新Key。旧版无绑定Key兼容读取。 */
+    fun putAiKey(baseUrl: String, value: String) {
+        val origin = EndpointPolicy.originOf(baseUrl) ?: error("AI origin required")
+        put(AI_KEY_ORIGIN, origin)
+        put(AI_KEY, value)
+    }
+
+    fun getAiKey(baseUrl: String): String? {
+        if (exists(AI_KEY_ORIGIN) && get(AI_KEY_ORIGIN) != EndpointPolicy.originOf(baseUrl)) return null
+        return get(AI_KEY)
+    }
+
+    /** AI设置跨密文／DataStore写入失败时回滚；不解密、不导出、不记录凭据。 */
+    fun ciphertext(name: String): ByteArray? =
+        if (exists(name)) AtomicFile(fileFor(name)).readFully() else null
+
+    fun restoreCiphertext(name: String, bytes: ByteArray?) {
+        if (bytes == null) delete(name) else writeCiphertext(name, bytes)
+    }
+
+    private fun writeCiphertext(name: String, bytes: ByteArray) {
+        val atomic = AtomicFile(fileFor(name))
+        val output = atomic.startWrite()
+        try { output.write(bytes); atomic.finishWrite(output) }
+        catch (error: Exception) { atomic.failWrite(output); throw error }
     }
 
     /** 不存在返回 null；存在但解密失败抛 [CredentialUnavailableException] */
     fun get(name: String): String? {
         val file = fileFor(name)
-        if (!file.exists()) return null
-        val payload = file.readBytes()
+        if (!exists(name)) return null
+        val payload = AtomicFile(file).readFully()
         if (payload.size < 2) throw CredentialUnavailableException("credential payload truncated: $name")
         val ivLength = payload[0].toInt() and 0xFF
         if (ivLength == 0 || payload.size <= 1 + ivLength) {
@@ -67,14 +96,14 @@ class CredentialStore(private val context: Context) {
     }
 
     fun delete(name: String) {
-        fileFor(name).delete()
+        AtomicFile(fileFor(name)).delete()
     }
 
-    fun exists(name: String): Boolean = fileFor(name).exists()
+    fun exists(name: String): Boolean = fileFor(name).let { it.exists() || File(it.path + ".bak").exists() }
 
     /** 供验证与清理使用：只看文件名，不读取内容 */
     fun names(): List<String> =
-        dir.listFiles()?.filter { it.isFile && it.name.endsWith(SUFFIX) }?.map { it.name.removeSuffix(SUFFIX) }?.sorted()
+        dir.listFiles()?.filter { it.isFile && it.name.endsWith(SUFFIX) }?.map { it.name.removeSuffix(SUFFIX) }?.filter { it != AI_KEY_ORIGIN }?.sorted()
             ?: emptyList()
 
     fun clearAll() {
@@ -113,6 +142,7 @@ class CredentialStore(private val context: Context) {
     companion object {
         const val INSTANCE_SECRET = "instance_secret"
         const val AI_KEY = "ai_key"
+        const val AI_KEY_ORIGIN = "ai_key_origin"
 
         private const val DIR_NAME = "credentials"
         private const val SUFFIX = ".bin"

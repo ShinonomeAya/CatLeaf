@@ -153,6 +153,8 @@
 
 ## 来源与保留要求
 
+2026-10-14新增 [AI阅读图标](ui/ai-reading.svg)：CatLeaf原创“书页＋星光”，24×24、2px描边，遵循本仓库MIT许可；原生派生为`ic_ai_reading.xml`。当前生产SVG增至53个、UI图标41个，既有40枚全集预览保留为历史，不包含这枚新增图标。
+
 品牌主标依据用户提供的猫图风格重新绘制路径与表情，未嵌入或直接描摹参考图片；英文路径字标和空态插画沿用此前CatLeaf设计，没有嵌入第三方字体或图片。外部搜索仅用于风格观察，没有下载或转用图库Logo。
 
 操作图标来自 [Lucide 0.562.0](https://github.com/lucide-icons/lucide/tree/0.562.0/icons)，固定提交6b4075b89b4016c4e1fb7165bc340c734ee466ec；来源与本地哈希逐项记录于ui-manifest。使用或再分发这些图标须同时保留 [完整上游许可](licenses/LUCIDE-LICENSE.txt)。bookmark-active为上述书签图标的填充派生版，遵循同一许可保留要求。

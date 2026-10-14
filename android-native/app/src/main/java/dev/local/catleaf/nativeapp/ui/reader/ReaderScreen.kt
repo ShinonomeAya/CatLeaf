@@ -65,6 +65,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -98,6 +100,8 @@ fun ReaderScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val density = LocalDensity.current
+    val compactActions = with(density) { LocalWindowInfo.current.containerSize.width.toDp() < 390.dp } || density.fontScale > 1.15f
     // 打开外链失败的提示（例如没有浏览器）；与提取失败提示分开展示
     var actionError by remember { mutableStateOf<String?>(null) }
     val noLinkHint = stringResource(R.string.reader_no_link_hint)
@@ -118,7 +122,12 @@ fun ReaderScreen(
     LaunchedEffect(localId) { viewModel.open(localId) }
 
     // 详情是整屏二级页：系统返回键与左上角返回同一行为，不能直接退出 App（契约 P04/设计规范 §6）
-    BackHandler(enabled = !showOfflineConfirm && !showOfflineResult, onBack = onBack)
+    BackHandler(enabled = !showOfflineConfirm && !showOfflineResult && !state.aiReading.open, onBack = onBack)
+    if (state.aiReading.open) AiReadingSheet(
+        reader = state, onMode = viewModel::selectAiReadingMode, onQuestion = viewModel::setAiQuestion,
+        onParagraph = viewModel::selectAiParagraph, onGenerate = viewModel::generateAiReading,
+        onSource = viewModel::jumpToAiSource, onDismiss = viewModel::closeAiReading,
+    )
 
     // 收藏/未读的回执走 Snackbar：取消收藏可短时撤销（P04）
     val feedback = state.feedback
@@ -190,7 +199,7 @@ fun ReaderScreen(
                 // 已读/未读留在固定工具栏：页首随正文滚动（F01）后操作仍要常驻可达
                 if (!state.loading && !state.missing) {
                     // UIR16：紧凑栏文字动作保持 48 dp 触摸高度
-                    TextButton(
+                    if (!compactActions) TextButton(
                         onClick = { if (state.isRead) viewModel.setUnread() else viewModel.setRead() },
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                         modifier = Modifier.heightIn(min = 48.dp),
@@ -201,6 +210,7 @@ fun ReaderScreen(
                             ),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
                         )
                     }
                     // Aa：不用退出文章去设置里调字号（T22 F13；原型 02→16）
@@ -214,6 +224,9 @@ fun ReaderScreen(
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
+                    }
+                    IconButton(onClick = viewModel::openAiReading, enabled = state.hasText) {
+                        Icon(painterResource(R.drawable.ic_ai_reading), contentDescription = AI_READING_TITLE)
                     }
                     Box {
                         // UIR16：「更多」用交付的 ellipsis 图标（48 dp IconButton），可访问名称仍为「更多」
@@ -236,6 +249,10 @@ fun ReaderScreen(
                             )
                         }
                         DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
+                            if (compactActions) DropdownMenuItem(
+                                text = { Text(stringResource(if (state.isRead) R.string.reader_mark_unread else R.string.reader_mark_read)) },
+                                onClick = { showMore = false; if (state.isRead) viewModel.setUnread() else viewModel.setRead() },
+                            )
                             DropdownMenuItem(
                                 text = { Text("保存离线") },
                                 onClick = { showMore = false; showOfflineConfirm = true },
@@ -394,6 +411,9 @@ fun ReaderScreen(
                                     } else actionError = ExternalBrowser.open(context, url)
                                 },
                                 scrollAnchor = state.scrollAnchor,
+                                paragraphJump = state.paragraphJump,
+                                onParagraphJumped = viewModel::consumeParagraphJump,
+                                onAiSelection = if (!state.showTranslation) { text -> viewModel.openAiReadingForSelection(text, localId, state.bodyHash) } else null,
                                 onScrollPosition = { y, height -> viewModel.rememberScrollPosition(localId, y, height) },
                                 fontSizeSp = state.bodyFontSizeSp,
                                 // 正文跟 App 生效的调色板（P07 强制深色时不跟系统）：背景亮度即答案
@@ -846,7 +866,7 @@ private fun readerHeaderHtml(state: ReaderUiState, retranslateUrl: String): Stri
                 .append(ReaderAssets.escapeHtml(action)).append("</span>")
             append("</div><div class=\"catleaf-meta\">").append(ReaderAssets.escapeHtml(fee)).append("</div></div>")
         }
-        append("<h1 class=\"catleaf-title\">").append(ReaderAssets.escapeHtml(state.title)).append("</h1>")
+        append("<h1 id=\"catleaf-title\" class=\"catleaf-title\">").append(ReaderAssets.escapeHtml(state.title)).append("</h1>")
         if (state.showTranslation) state.translationSegments?.get(BilingualArticle.TITLE_ID)?.let {
             append("<div class=\"catleaf-translation catleaf-title-translation\">")
                 .append(ReaderAssets.escapeHtml(it)).append("</div>")

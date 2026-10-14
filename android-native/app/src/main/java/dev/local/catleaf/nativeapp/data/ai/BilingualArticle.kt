@@ -16,6 +16,14 @@ class BilingualArticle private constructor(private val markedHtml: String, val b
 
     fun withoutTitle(): BilingualArticle = BilingualArticle(markedHtml, blocks.filter { it.id != TITLE_ID })
 
+    fun selectionBlock(text: String): Block? {
+        if (text.isBlank() || text.length > MAX_SELECTION_CHARS) return null
+        fun normalized(value: String) = value.replace(Regex("[\\s\\u00a0]+"), " ").trim()
+        val selection = normalized(text)
+        if (selection.isBlank()) return null
+        return blocks.filter { normalized(it.text).contains(selection) }.singleOrNull()
+    }
+
     fun inputJson(): String = JSONArray().apply {
         blocks.forEach { put(JSONObject().put("id", it.id).put("text", it.text)) }
     }.toString()
@@ -60,6 +68,7 @@ class BilingualArticle private constructor(private val markedHtml: String, val b
 
     companion object {
         const val TITLE_ID = "catleaf-title"
+        const val MAX_SELECTION_CHARS = 2000
 
         fun fromHtml(sanitizedHtml: String, title: String = ""): BilingualArticle {
             val doc = Jsoup.parseBodyFragment(sanitizedHtml)

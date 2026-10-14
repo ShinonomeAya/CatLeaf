@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,7 +63,7 @@ import java.util.Locale
  * P05 日摘要（原型 13 = 范围预览、原型 04 = 结果），整屏二级页、两步同页。
  *
  * 界面必须如实表达契约的三条硬规则：
- * - 范围只基于**已加载**内容，页面上写明“可能不包含该日全部文章”；
+ * - 范围只基于**本机已保存**内容，页面上写明“可能不包含该日全部文章”；
  * - 超限只提示、只让用户取消勾选，按钮禁用——绝不后台截断；
  * - “结果不完整”用错误色横幅与正常成功清楚区分（该内容未写成功缓存）。
  */
@@ -121,6 +123,7 @@ fun DigestScreen(
                     state = state,
                     onPickDate = { showPicker = true },
                     onToggle = viewModel::toggleSelected,
+                    onClear = viewModel::clearSelection,
                     onGenerate = { viewModel.generate(force = false) },
                     onOpenAiSettings = onOpenAiSettings,
                 )
@@ -163,6 +166,7 @@ private fun ScopePage(
     state: DigestUiState,
     onPickDate: () -> Unit,
     onToggle: (String) -> Unit,
+    onClear: () -> Unit,
     onGenerate: () -> Unit,
     onOpenAiSettings: (() -> Unit)?,
 ) {
@@ -245,14 +249,18 @@ private fun ScopePage(
 
         if (state.localDate != null) {
             item(key = "loaded") {
-                Text(
-                    text = stringResource(
-                        if (state.items.isEmpty()) R.string.digest_loaded_none else R.string.digest_loaded_count,
-                        state.items.size,
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
+                Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(
+                            if (state.items.isEmpty()) R.string.digest_loaded_none else R.string.digest_loaded_count,
+                            state.items.size,
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f).padding(vertical = 8.dp),
+                    )
+                    TextButton(onClick = onClear, enabled = !state.loading && !state.generating && state.selectedCount > 0,
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text("清空勾选") }
+                }
             }
             items(state.items, key = { it.localId }) { item ->
                 CandidateRow(item, onToggle)
@@ -570,6 +578,7 @@ private fun ResultPage(
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun PointRow(index: Int, point: DigestPointView, onSourceTap: (Int) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
@@ -582,6 +591,7 @@ private fun PointRow(index: Int, point: DigestPointView, onSourceTap: (Int) -> U
         )
         Spacer(Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {
+            if (point.topic.isNotBlank()) Text(point.topic, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Text(point.text, style = MaterialTheme.typography.bodyLarge)
             if (point.sourceIds.isEmpty()) {
                 // 无效编号不成链接：只标待核对（整份结果也已标不完整）
@@ -592,16 +602,9 @@ private fun PointRow(index: Int, point: DigestPointView, onSourceTap: (Int) -> U
                     modifier = Modifier.padding(top = 2.dp),
                 )
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 2.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 2.dp)) {
                     point.sourceIds.forEach { no ->
-                        Text(
-                            text = "[$no]",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .clickable { onSourceTap(no) }
-                                .padding(horizontal = 6.dp, vertical = 6.dp),
-                        )
+                        TextButton(onClick = { onSourceTap(no) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("来源$no") }
                     }
                 }
             }

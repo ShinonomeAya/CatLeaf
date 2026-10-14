@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.local.catleaf.nativeapp.data.ai.Translator
 import dev.local.catleaf.nativeapp.data.ai.BilingualArticle
+import dev.local.catleaf.nativeapp.data.ai.ArticleAssistant
 import dev.local.catleaf.nativeapp.data.article.ArticleSanitizer
 import dev.local.catleaf.nativeapp.data.article.FullTextExtractor
 import dev.local.catleaf.nativeapp.data.local.*
@@ -22,7 +23,6 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
-import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -36,8 +36,8 @@ class FullTextSessionTest {
     private lateinit var vm: ReaderViewModel
     private val store = ViewModelStore()
     private lateinit var previous: SettingsStore.Snapshot
-    private val credentialFile = File(app.noBackupFilesDir, "credentials/ai_key.bin")
     private var previousCiphertext: ByteArray? = null
+    private var previousOrigin: ByteArray? = null
     private val title = "本地测试标题"
     private val oldHtml = "<p>旧正文</p>"
     private val fullHtml = "<html><head><title>$title</title><meta property='og:image' content='https://example.org/cover.png'></head><body><article><h1>$title</h1><p>${"完整正文用于同会话测试。".repeat(45)}</p></article></body></html>"
@@ -50,6 +50,12 @@ class FullTextSessionTest {
     private var invalidTranslation = false
     private val base = "https://ai.example.org/v1"
     private val model = "rf-local-fake"
+    private var readingGate: CountDownLatch? = null
+    private val readingStarted = CountDownLatch(1)
+    private val readingFinished = CountDownLatch(1)
+    private var readingCalls = 0
+    private var readingPrompt = ""
+    private var invalidReading = false
 
     private fun client(body: (Request) -> String) = OkHttpClient.Builder().addInterceptor { chain ->
         Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
@@ -58,10 +64,11 @@ class FullTextSessionTest {
 
     @Before fun setup() = runBlocking {
         previous = settings.current()
-        previousCiphertext = credentialFile.takeIf { it.exists() }?.readBytes() // Preserve opaque bytes, never decrypt existing credentials.
+        previousCiphertext = CredentialStore(app).ciphertext(CredentialStore.AI_KEY)
+        previousOrigin = CredentialStore(app).ciphertext(CredentialStore.AI_KEY_ORIGIN)
         settings.setActiveScopeKind(SCOPE_KIND_LOCAL)
         settings.setAiConfig(base, model)
-        CredentialStore(app).put(CredentialStore.AI_KEY, "NOT-A-REAL-KEY-rf-local")
+        CredentialStore(app).putAiKey(base, "NOT-A-REAL-KEY-rf-local")
         db = Room.inMemoryDatabaseBuilder(app, CatLeafDatabase::class.java).build()
         seed("rf-session")
         val fetch = PublicFetch(client = client {
@@ -86,16 +93,29 @@ class FullTextSessionTest {
             org.json.JSONObject().put("choices", org.json.JSONArray().put(org.json.JSONObject()
                 .put("message", org.json.JSONObject().put("content", result)).put("finish_reason", "stop"))).toString()
         } })
-        main.runOnMainSync { vm = ReaderViewModel(app, db, FullTextExtractor(null, fetch), translator); store.put("reader", vm) }
+        val reading = ArticleAssistant(db.aiCache(), AiClient { client { request ->
+            readingCalls++
+            val buffer = okio.Buffer()
+            request.body!!.writeTo(buffer)
+            readingPrompt = org.json.JSONObject(buffer.readUtf8()).getJSONArray("messages").getJSONObject(0).getString("content")
+            readingStarted.countDown()
+            check(readingGate?.await(15, TimeUnit.SECONDS) != false)
+            readingFinished.countDown()
+            val result = if (invalidReading) "broken" else """{"text":"本地概览","sourceIds":["catleaf-b1"],"points":[{"text":"本地重点","sourceIds":["catleaf-b1"]}],"notInArticle":false,"background":""}"""
+            org.json.JSONObject().put("choices", org.json.JSONArray().put(org.json.JSONObject()
+                .put("message", org.json.JSONObject().put("content", result)).put("finish_reason", "stop"))).toString()
+        } })
+        main.runOnMainSync { vm = ReaderViewModel(app, db, FullTextExtractor(null, fetch), translator, reading); store.put("reader", vm) }
     }
 
     @After fun cleanup() = runBlocking {
-        extractGate?.countDown(); translationGate?.countDown()
+        extractGate?.countDown(); translationGate?.countDown(); readingGate?.countDown()
         main.runOnMainSync { store.clear() }
         settings.setAiConfig(previous.aiBaseUrl, previous.aiModel)
         settings.setActiveScopeKind(previous.activeScopeKind)
         settings.setCurrentInstanceKey(previous.currentInstanceKey)
-        previousCiphertext?.let { credentialFile.writeBytes(it) } ?: CredentialStore(app).delete(CredentialStore.AI_KEY)
+        CredentialStore(app).restoreCiphertext(CredentialStore.AI_KEY, previousCiphertext)
+        CredentialStore(app).restoreCiphertext(CredentialStore.AI_KEY_ORIGIN, previousOrigin)
         CurrentBody.localId = null
         db.close()
     }
@@ -116,6 +136,93 @@ class FullTextSessionTest {
     }
     private fun open(id: String = "rf-session") { main.runOnMainSync { vm.open(id) }; waitFor { !vm.state.value.loading } }
     private fun fetch() { main.runOnMainSync { vm.fetchFullText() }; waitFor { !vm.state.value.extracting } }
+
+    private fun openReading() {
+        main.runOnMainSync { vm.openAiReading() }
+        waitFor { vm.state.value.aiReading.model == model }
+    }
+
+    @Test fun article_overview_uses_cache_keeps_old_result_on_failure_and_validates_source_jumps() {
+        open(); openReading()
+        main.runOnMainSync { vm.generateAiReading() }
+        waitFor { !vm.state.value.aiReading.busy && vm.state.value.aiReading.answer != null }
+        val answer = vm.state.value.aiReading.answer
+        main.runOnMainSync { vm.jumpToAiSource("https://evil.example/") }
+        assertNull(vm.state.value.paragraphJump)
+        main.runOnMainSync { vm.jumpToAiSource("catleaf-b1") }
+        assertEquals("catleaf-b1", vm.state.value.paragraphJump!!.id)
+        assertFalse(vm.state.value.aiReading.open)
+        openReading()
+        waitFor { vm.state.value.aiReading.cached }
+        assertEquals(1, readingCalls)
+        invalidReading = true
+        main.runOnMainSync { vm.generateAiReading(force = true) }
+        waitFor { !vm.state.value.aiReading.busy && vm.state.value.aiReading.notice != null }
+        assertEquals(answer, vm.state.value.aiReading.answer)
+        assertEquals(2, readingCalls)
+    }
+
+    @Test fun selected_text_opens_without_request_and_cannot_reuse_another_article_body_or_scope() = runBlocking {
+        open()
+        val hash = vm.state.value.bodyHash
+        main.runOnMainSync { vm.openAiReadingForSelection("旧正文", "another-article", hash) }
+        assertFalse(vm.state.value.aiReading.open)
+        main.runOnMainSync { vm.openAiReadingForSelection("旧正文", "rf-session", "old-render") }
+        assertFalse(vm.state.value.aiReading.open)
+        main.runOnMainSync { vm.openAiReadingForSelection("旧正文", "rf-session", hash) }
+        waitFor { vm.state.value.aiReading.baseUrl == base }
+        assertEquals(ArticleAssistant.Mode.Explain, vm.state.value.aiReading.mode)
+        assertEquals("catleaf-b1", vm.state.value.aiReading.paragraphId)
+        assertEquals("旧正文", vm.state.value.aiReading.selection)
+        assertEquals(0, readingCalls)
+        main.runOnMainSync { vm.selectAiReadingMode(ArticleAssistant.Mode.Question) }
+        waitFor { vm.state.value.aiReading.baseUrl == base }
+        main.runOnMainSync { vm.setAiQuestion("这是什么意思？"); vm.generateAiReading() }
+        waitFor { !vm.state.value.aiReading.busy && vm.state.value.aiReading.answer != null }
+        assertTrue(readingPrompt.contains("\"selectedText\":\"旧正文\""))
+        assertEquals(1, readingCalls)
+        main.runOnMainSync { vm.closeAiReading() }
+        fetch()
+        main.runOnMainSync { vm.openAiReadingForSelection("旧正文", "rf-session", hash) }
+        assertFalse(vm.state.value.aiReading.open)
+        settings.setActiveScopeKind(SCOPE_KIND_INSTANCE)
+        main.runOnMainSync { vm.openAiReadingForSelection("完整正文", "rf-session", vm.state.value.bodyHash) }
+        assertFalse(vm.state.value.aiReading.open)
+    }
+
+    @Test fun fulltext_replacement_discards_late_overview_and_uses_the_new_body_in_the_same_session() {
+        readingGate = CountDownLatch(1)
+        open(); openReading()
+        main.runOnMainSync { vm.generateAiReading() }
+        assertTrue(readingStarted.await(5, TimeUnit.SECONDS))
+        fetch()
+        readingGate!!.countDown()
+        assertTrue(readingFinished.await(5, TimeUnit.SECONDS))
+        assertFalse(vm.state.value.aiReading.open)
+        assertNull(vm.state.value.aiReading.answer)
+        openReading()
+        main.runOnMainSync { vm.generateAiReading() }
+        waitFor { !vm.state.value.aiReading.busy && vm.state.value.aiReading.answer != null }
+        assertTrue(readingPrompt.contains("完整正文用于同会话测试"))
+        assertFalse(readingPrompt.contains("旧正文"))
+    }
+
+    @Test fun changing_article_or_scope_never_applies_the_previous_reading_result() = runBlocking {
+        readingGate = CountDownLatch(1)
+        open(); openReading()
+        main.runOnMainSync { vm.generateAiReading() }
+        assertTrue(readingStarted.await(5, TimeUnit.SECONDS))
+        seed("rf-other-article")
+        open("rf-other-article")
+        readingGate!!.countDown()
+        assertTrue(readingFinished.await(5, TimeUnit.SECONDS))
+        assertNull(vm.state.value.aiReading.answer)
+        openReading()
+        settings.setCurrentInstanceKey("rf-other-scope")
+        settings.setActiveScopeKind(SCOPE_KIND_INSTANCE)
+        waitFor { !vm.state.value.aiReading.open }
+        assertNull(vm.state.value.aiReading.answer)
+    }
 
     @Test fun summary_to_fulltext_enables_offline_save_in_same_session() = runBlocking {
         val old = db.articles().getContent("rf-session")!!

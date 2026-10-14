@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.local.catleaf.nativeapp.data.ai.DigestSummarizer
-import dev.local.catleaf.nativeapp.data.article.ArticleRepository
 import dev.local.catleaf.nativeapp.data.article.ArticleSanitizer
 import dev.local.catleaf.nativeapp.data.local.CatLeafDatabase
 import dev.local.catleaf.nativeapp.data.network.EndpointPolicy
@@ -15,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import java.util.TimeZone
 
 enum class DigestStep { Scope, Result }
@@ -29,7 +31,7 @@ data class DigestItemView(
     val selected: Boolean,
 )
 
-data class DigestPointView(val text: String, val sourceIds: List<Int>)
+data class DigestPointView(val text: String, val sourceIds: List<Int>, val topic: String = "")
 
 data class DigestSourceView(val no: Int, val localId: String, val title: String, val link: String?)
 
@@ -67,7 +69,7 @@ data class DigestUiState(
     val result: DigestResultView? = null,
 ) {
     val canGenerate: Boolean
-        get() = localDate != null && selectedCount > 0 && !overItems && !overChars && !generating
+        get() = !loading && localDate != null && selectedCount > 0 && !overItems && !overChars && !generating
 }
 
 /** 来源点击的去向（P05：点来源进已缓存文章；无法离线打开时给原因与原链接） */
@@ -85,9 +87,12 @@ sealed class SourceAction {
  * 结果只归属原任务，不写到用户后来切换的源/日期，也不自动重试计费。
  * 已经完整成功的结果在 Room 缓存里，回到原范围时优先打开，不浪费这次请求。
  */
-class DigestViewModel(application: Application) : AndroidViewModel(application) {
+class DigestViewModel @JvmOverloads constructor(
+    application: Application,
+    private val db: CatLeafDatabase = CatLeafDatabase.get(application),
+) : AndroidViewModel(application) {
+    companion object { const val ALL_FEEDS = "__all_subscriptions__" }
 
-    private val db = CatLeafDatabase.get(application)
     private val settings = SettingsStore(application)
 
     private var summarizer: DigestSummarizer? = null
@@ -107,38 +112,39 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     private val _state = MutableStateFlow(DigestUiState())
     val state: StateFlow<DigestUiState> = _state.asStateFlow()
 
+    init {
+        viewModelScope.launch { settings.snapshot.collect {
+            if (instanceKey != null && settings.currentScopeKey() != instanceKey) {
+                token = "scope-changed-${System.nanoTime()}"
+                allCandidates = emptyList()
+                selectedIds = emptySet()
+                rowsCache = emptyList()
+                _state.value = _state.value.copy(loading = false, generating = false, result = null,
+                    items = emptyList(), selectedCount = 0, selectedChars = 0, overItems = false, overChars = false,
+                    newContentNotice = false, notice = "使用范围已切换，请重新打开摘要页")
+            }
+        } }
+    }
+
     /** 打开摘要页：源固定为进入时的当前源；日期由列表筛选带来（没带就先选日期） */
     fun open(newFeedId: String, seedDate: String?) {
+        val opening = "opening-${System.nanoTime()}".also { token = it }
         viewModelScope.launch {
             val snapshot = settings.current()
+            if (token != opening) return@launch
             // 范围键（契约 8.1）：本机=local:v1，实例=origin 哈希。AI 配置独立于实例（契约 8.3），
             // 只要有文章与有效 AI 配置，本机范围同样可生成摘要。空键=实例指针悬空（走修复）。
             instanceKey = settings.currentScopeKey().ifEmpty { null }
             feedId = newFeedId
             baseUrl = snapshot.aiBaseUrl.orEmpty()
             model = snapshot.aiModel.orEmpty()
-            token = "${instanceKey}|$newFeedId|$seedDate"
             val key = instanceKey
             if (key == null) {
                 _state.value = DigestUiState(loading = false, notice = "尚未连接实例，无法生成摘要")
                 return@launch
             }
-            val feedTitle = db.feeds().list(key).firstOrNull { it.feedId == newFeedId }?.title.orEmpty()
-
-            // 「已加载」= 本地这个源已存的条目（与阅读列表同一窗口），不发网络请求
-            val loaded = db.articles().listByFeed(key, newFeedId, ArticleRepository.LIST_PAGE_SIZE, 0)
-            rowsCache = loaded.map { entity ->
-                val link = entity.link?.takeIf { EndpointPolicy.isSafePublicUrl(it) }
-                val stored = db.articles().getContent(entity.localId)
-                DigestScope.Row(
-                    localId = entity.localId,
-                    title = entity.title,
-                    publishedAt = entity.publishedAt,
-                    link = entity.link,
-                    body = stored?.content?.let { ArticleSanitizer.sanitize(it, link).plainText }?.ifBlank { null },
-                    summary = stored?.summary?.let { ArticleSanitizer.sanitize(it, link).plainText }?.ifBlank { null },
-                )
-            }
+            val feedTitle = if (newFeedId == ALL_FEEDS) "全部订阅" else db.feeds().list(key).firstOrNull { it.feedId == newFeedId }?.title.orEmpty()
+            if (token != opening || feedId != newFeedId || settings.currentScopeKey() != key) return@launch
 
             _state.value = DigestUiState(
                 loading = false,
@@ -157,14 +163,24 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleSelected(localId: String) {
+        if (_state.value.generating || _state.value.loading) return
+        token = "selection-${System.nanoTime()}"
         val next = selectedIds.toMutableSet()
         if (!next.remove(localId)) next += localId
         selectedIds = next
         publishScopeState()
     }
 
+    fun clearSelection() {
+        if (_state.value.generating || _state.value.loading) return
+        token = "selection-${System.nanoTime()}"
+        selectedIds = emptySet()
+        publishScopeState()
+    }
+
     /** 结果页回范围预览：顺手重新核对一次「有新增内容」（本地查询，不发请求） */
     fun showScope() {
+        if (_state.value.generating) return
         _state.value = _state.value.copy(step = DigestStep.Scope, result = null, notice = null)
         viewModelScope.launch { checkNewContent() }
     }
@@ -172,7 +188,7 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     /** @param force 手动「重新生成」：跳过完全匹配缓存，真的再请求一次（界面已说明会再次请求） */
     fun generate(force: Boolean = false) {
         val current = _state.value
-        if (current.generating) return
+        if (current.generating || current.loading) return
         val date = current.localDate ?: run {
             _state.value = current.copy(notice = "请先选择日期")
             return
@@ -197,11 +213,22 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
         val sources = selection.selected.mapIndexed { i, c -> DigestSummarizer.Source(i + 1, c.localId, c.title, c.link) }
         val texts = selection.selected.map { it.text }
         val taskToken = token
+        val taskScope = instanceKey.orEmpty()
+        val taskFeed = feedId.orEmpty()
+        val taskBase = baseUrl
+        val taskModel = model
         _state.value = current.copy(generating = true, notice = null)
 
         viewModelScope.launch {
-            val apiKey = runCatching { CredentialStore(getApplication()).get(CredentialStore.AI_KEY) }
+            val config = settings.current()
+            if (token != taskToken || settings.currentScopeKey() != taskScope) return@launch
+            if (config.aiBaseUrl != taskBase || config.aiModel != taskModel) {
+                updateIfCurrent(taskToken) { it.copy(generating = false, notice = "AI配置已改变，请重新打开摘要页") }
+                return@launch
+            }
+            val apiKey = runCatching { CredentialStore(getApplication()).getAiKey(taskBase) }
                 .getOrNull().orEmpty()
+            if (token != taskToken || settings.currentScopeKey() != taskScope) return@launch
             if (baseUrl.isBlank() || model.isBlank() || apiKey.isBlank()) {
                 updateIfCurrent(taskToken) {
                     it.copy(generating = false, notice = "尚未配置 AI（设置 → AI 配置）")
@@ -209,18 +236,24 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
                 return@launch
             }
             val request = DigestSummarizer.Request(
-                instanceKey = instanceKey.orEmpty(),
-                feedId = feedId.orEmpty(),
+                instanceKey = taskScope,
+                feedId = taskFeed,
                 feedTitle = current.feedTitle,
                 localDate = date,
                 zoneId = TimeZone.getDefault().id,
                 sources = sources,
                 texts = texts,
-                baseUrl = baseUrl,
-                model = model,
+                baseUrl = taskBase,
+                model = taskModel,
                 apiKey = apiKey,
             )
-            when (val outcome = ensureSummarizer().summarize(request, bypassCache = force)) {
+            val outcome = try { ensureSummarizer().summarize(request, bypassCache = force) }
+            catch (error: Exception) {
+                if (error is CancellationException) throw error
+                updateIfCurrent(taskToken) { it.copy(generating = false, notice = "摘要暂不可用，原有结果已保留") }
+                return@launch
+            }
+            when (outcome) {
                 is DigestSummarizer.Outcome.Cached -> updateIfCurrent(taskToken) {
                     it.copy(
                         generating = false,
@@ -264,9 +297,18 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     /** 点结果里的来源：进已缓存文章；文章不在了用冻结表里的原链接兜底；都没有就给原因 */
     fun resolveSource(no: Int, onResolved: (SourceAction) -> Unit) {
         val source = _state.value.result?.sources?.firstOrNull { it.no == no } ?: return
+        val taskToken = token
+        val scope = instanceKey ?: return
         viewModelScope.launch {
+            val article = try { db.articles().get(source.localId) }
+            catch (error: Exception) {
+                if (error is CancellationException) throw error
+                if (isCurrent(taskToken, scope)) onResolved(SourceAction.Unavailable("无法读取本地原文，请稍后重试"))
+                return@launch
+            }
+            if (!isCurrent(taskToken, scope)) return@launch
             val target = when {
-                db.articles().get(source.localId) != null -> SourceAction.OpenReader(source.localId)
+                article?.instanceKey == scope -> SourceAction.OpenReader(source.localId)
                 source.link != null -> SourceAction.OpenExternal(source.link)
                 else -> SourceAction.Unavailable("原文已不在本地，且没有可用的安全链接")
             }
@@ -275,8 +317,38 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private suspend fun applyDate(date: String?) {
-        token = "$instanceKey|$feedId|$date"
-        _state.value = _state.value.copy(localDate = date)
+        val taskToken = "$instanceKey|$feedId|$date|${System.nanoTime()}".also { token = it }
+        val scope = instanceKey ?: return
+        val source = feedId?.takeUnless { it == ALL_FEEDS }
+        allCandidates = emptyList()
+        selectedIds = emptySet()
+        rowsCache = emptyList()
+        _state.value = _state.value.copy(localDate = date, loading = true, generating = false, result = null,
+            step = DigestStep.Scope, items = emptyList(), selectedCount = 0, selectedChars = 0,
+            overItems = false, overChars = false, newContentNotice = false, notice = null)
+        val read = runCatching {
+            withContext(Dispatchers.IO) {
+                val day = date?.let(java.time.LocalDate::parse)
+                val zone = java.time.ZoneId.systemDefault()
+                val loaded = if (day == null) emptyList() else db.articles().listForDigest(scope, source,
+                    day.atStartOfDay(zone).toInstant().toString(), day.plusDays(1).atStartOfDay(zone).toInstant().toString())
+                loaded.map { entity ->
+                    val link = entity.link?.takeIf { EndpointPolicy.isSafePublicUrl(it) }
+                    val stored = db.articles().getContent(entity.localId)
+                    DigestScope.Row(entity.localId, entity.title, entity.publishedAt, link,
+                        stored?.content?.let { ArticleSanitizer.sanitize(it, link).plainText }?.ifBlank { null },
+                        stored?.summary?.let { ArticleSanitizer.sanitize(it, link).plainText }?.ifBlank { null })
+                }
+            }
+        }
+        (read.exceptionOrNull() as? CancellationException)?.let { throw it }
+        if (!isCurrent(taskToken, scope)) return
+        if (read.isFailure) {
+            _state.value = _state.value.copy(loading = false, notice = "无法读取本地摘要范围，请重试")
+            return
+        }
+        rowsCache = read.getOrThrow()
+        _state.value = _state.value.copy(loading = false, notice = null)
         allCandidates = DigestScope.candidates(rowsCache, date)
         selectedIds = allCandidates.map { it.localId }.toSet()
         publishScopeState()
@@ -286,7 +358,15 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
         if (baseUrl.isNotBlank() && model.isNotBlank()) {
             val key = cacheKeyFor(allCandidates, date)
             if (key != null) {
-                val row = db.aiCache().get(key)?.takeIf { it.complete }
+                val row = try {
+                    db.aiCache().get(key)?.takeIf { it.complete }
+                        ?: db.aiCache().get(DigestSummarizer.legacyCacheKey(key))?.takeIf { it.complete }
+                } catch (error: Exception) {
+                    if (error is CancellationException) throw error
+                    if (isCurrent(taskToken, scope)) _state.value = _state.value.copy(notice = "无法读取AI缓存，本次未请求供应商")
+                    return
+                }
+                if (!isCurrent(taskToken, scope)) return
                 if (row != null) {
                     val parsed = DigestSummarizer.parse(row.result)
                     val (digest, reason) = DigestSummarizer.validate(parsed, parsed.sources.size)
@@ -310,8 +390,16 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
      */
     private suspend fun checkNewContent() {
         val date = _state.value.localDate ?: return
+        val taskToken = token
+        val scope = instanceKey ?: return
         val prefix = "$instanceKey|$feedId|$date|${TimeZone.getDefault().id}|"
-        val latest = db.aiCache().latestCompleteByPrefix(prefix) ?: return
+        val latest = try { db.aiCache().latestCompleteByPrefix(prefix) }
+        catch (error: Exception) {
+            if (error is CancellationException) throw error
+            if (isCurrent(taskToken, scope)) _state.value = _state.value.copy(notice = "无法读取AI缓存，本次未请求供应商")
+            return
+        } ?: return
+        if (!isCurrent(taskToken, scope)) return
         val cachedCount = DigestSummarizer.parse(latest.result).sources.size
         _state.value = _state.value.copy(newContentNotice = cachedCount < allCandidates.size)
     }
@@ -361,7 +449,7 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     ): DigestResultView = DigestResultView(
         title = digest.title,
         overview = digest.overview,
-        points = digest.points.map { DigestPointView(it.text, it.sourceIds) },
+        points = digest.points.map { DigestPointView(it.text, it.sourceIds, it.topic) },
         sources = sources.map { DigestSourceView(it.no, it.localId, it.title, it.link) },
         generatedAt = generatedAt,
         fromCache = fromCache,
@@ -377,4 +465,7 @@ class DigestViewModel(application: Application) : AndroidViewModel(application) 
     private inline fun updateIfCurrent(expected: String, transform: (DigestUiState) -> DigestUiState) {
         if (token == expected) _state.value = transform(_state.value)
     }
+
+    private suspend fun isCurrent(expected: String, scope: String): Boolean =
+        settings.currentScopeKey() == scope && token == expected
 }

@@ -1,0 +1,50 @@
+{
+  "versionName": "0.1.26",
+  "versionCode": 27,
+  "packageName": "dev.local.catleaf.nativeapp",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "status": "candidate-not-published",
+  "apk": {
+    "path": "F:\\sokusai\\CatLeaf-release-candidate\\2026-10-14\\catleaf-0.1.26-code27.apk",
+    "bytes": 28804534,
+    "sha256": "d130e0f51a91736b172388d4bfe7ab1b8c33b7ff9ea41609cfc415c6df7d3140",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "installedPhysicalApkSha256": "d130e0f51a91736b172388d4bfe7ab1b8c33b7ff9ea41609cfc415c6df7d3140"
+  },
+  "validation": {
+    "unitTests": 204,
+    "unitSuites": 33,
+    "unitFailures": 0,
+    "unitErrors": 0,
+    "unitSkipped": 0,
+    "lintErrors": 0,
+    "lintWarnings": 29,
+    "lintHints": 2,
+    "isolatedAndroid10RegressionTests": 70,
+    "isolatedActualWebViewSelectionTests": 1,
+    "nativeMatrixTests": 8,
+    "nativeMatrixGroups": 8,
+    "nativeScreenshots": 72,
+    "deepSeekSyntheticRequests": 10,
+    "selectionSpecificRealModelRequests": 0,
+    "physicalDevice": "Android16 test phone A, same-signer data-preserving release install",
+    "physicalWebView": "143.0.7499.192",
+    "isolatedWebView": "74.0.3729.185",
+    "physicalAiRequests": 0,
+    "physicalSubscriptions": 6,
+    "physicalFavorites": 1,
+    "deviceRestored": true,
+    "fullG7": false,
+    "formalG8": false
+  },
+  "pending": [
+    "F09 commenter failure sample",
+    "F09 3-5 volunteer trials deferred by user",
+    "selection-specific real model quality and physical-device AI answers",
+    "additional OEM/WebView selection menu compatibility",
+    "original complete G7/G8 and browser/system installation-chain gaps"
+  ],
+  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-opml-ai-reading\\ui-refine-0.1.26\\",
+  "evidenceIndex": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-opml-ai-reading\\ui-refine-0.1.26\\验收证据索引.md"
+}

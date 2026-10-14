@@ -69,6 +69,8 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
     private val settings = SettingsStore(application)
     private val credentials = CredentialStore(application)
     private val client = AiClient()
+    private var savedKeyOrigin: String? = null
+    private var storedKeyExists = false
 
     private val _state = MutableStateFlow(AiSettingsUiState())
     val state: StateFlow<AiSettingsUiState> = _state.asStateFlow()
@@ -76,23 +78,39 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
     init {
         viewModelScope.launch {
             val snapshot = settings.current()
+            val binding = runCatching { credentials.get(CredentialStore.AI_KEY_ORIGIN) }
+            savedKeyOrigin = binding.getOrNull()
+                ?: EndpointPolicy.originOf(snapshot.aiBaseUrl.orEmpty())
+            storedKeyExists = credentials.exists(CredentialStore.AI_KEY) && binding.isSuccess
             _state.value = _state.value.copy(
                 baseUrl = snapshot.aiBaseUrl.orEmpty(),
                 model = snapshot.aiModel.orEmpty(),
-                keySaved = credentials.exists(CredentialStore.AI_KEY),
+                keySaved = storedKeyExists && EndpointPolicy.originOf(snapshot.aiBaseUrl.orEmpty()) == savedKeyOrigin,
             )
         }
     }
 
     fun onBaseUrlChange(value: String) {
-        _state.value = _state.value.copy(baseUrl = value, message = null, test = AiTestState.Untested)
+        if (_state.value.saving || _state.value.testing) return
+        _state.value = _state.value.copy(baseUrl = value, keySaved = storedKeyExists && EndpointPolicy.originOf(value) == savedKeyOrigin,
+            message = null, test = AiTestState.Untested)
+    }
+
+    fun useDeepSeek() {
+        if (_state.value.saving || _state.value.testing) return
+        val sameProvider = EndpointPolicy.originOf(_state.value.baseUrl) == DEEPSEEK_BASE
+        onBaseUrlChange(DEEPSEEK_BASE)
+        _state.value = _state.value.copy(model = DEEPSEEK_MODEL, keyInput = if (sameProvider) _state.value.keyInput else "",
+            keyVisible = false, message = "已填入DeepSeek地址和模型；请核对该供应商的Key后保存。")
     }
 
     fun onModelChange(value: String) {
+        if (_state.value.saving || _state.value.testing) return
         _state.value = _state.value.copy(model = value, message = null, test = AiTestState.Untested)
     }
 
     fun onKeyChange(value: String) {
+        if (_state.value.saving || _state.value.testing) return
         _state.value = _state.value.copy(keyInput = value, message = null, test = AiTestState.Untested)
     }
 
@@ -100,10 +118,10 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
         _state.value = _state.value.copy(keyVisible = !_state.value.keyVisible)
     }
 
-    /** 保存配置：先校验、再写地址与模型、最后写 Key；**任何一步失败都不显示成功** */
+    /** 密文与配置都写盘成功才显示成功；失败恢复原密文。 */
     fun save() {
         val snapshot = _state.value
-        if (snapshot.saving) return
+        if (snapshot.saving || snapshot.testing) return
         val normalized = EndpointPolicy.normalizeAiBaseUrl(snapshot.baseUrl).getOrElse { error ->
             _state.value = snapshot.copy(message = error.message ?: "服务地址不合法")
             return
@@ -119,33 +137,51 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
 
         _state.value = snapshot.copy(saving = true, message = null)
         viewModelScope.launch {
+            val oldKey = runCatching { credentials.ciphertext(CredentialStore.AI_KEY) }
+            val oldOrigin = runCatching { credentials.ciphertext(CredentialStore.AI_KEY_ORIGIN) }
+            if (oldKey.isFailure || oldOrigin.isFailure) {
+                _state.value = snapshot.copy(saving = false, message = "无法保留原AI配置，本次未保存")
+                return@launch
+            }
             val ok = runCatching {
                 if (snapshot.keyInput.isNotBlank()) {
-                    credentials.put(CredentialStore.AI_KEY, snapshot.keyInput.trim())
+                    credentials.putAiKey(normalized, snapshot.keyInput.trim())
+                } else if (!credentials.exists(CredentialStore.AI_KEY_ORIGIN)) {
+                    credentials.put(CredentialStore.AI_KEY_ORIGIN, EndpointPolicy.originOf(normalized)!!)
                 }
                 settings.setAiConfig(normalized, snapshot.model.trim())
                 true
             }.getOrElse { false }
+            val restored = ok || runCatching {
+                credentials.restoreCiphertext(CredentialStore.AI_KEY, oldKey.getOrThrow())
+                credentials.restoreCiphertext(CredentialStore.AI_KEY_ORIGIN, oldOrigin.getOrThrow())
+                true
+            }.getOrElse { false }
 
+            if (ok) { savedKeyOrigin = EndpointPolicy.originOf(normalized); storedKeyExists = true }
             _state.value = _state.value.copy(
                 saving = false,
-                keyInput = "",
-                keySaved = snapshot.keyInput.isNotBlank() || snapshot.keySaved,
-                message = if (ok) "已保存（Key 保存在系统密钥库里）" else "保存失败，配置未生效",
+                keyInput = if (ok) "" else snapshot.keyInput,
+                keySaved = if (ok) true else snapshot.keySaved && restored,
+                message = if (ok) "已保存（Key已加密保存在本机）" else if (restored) "保存失败，原AI凭据已保留" else "保存失败，凭据恢复未完成，请重新配置AI",
             )
         }
     }
 
     /** 删除 AI 配置：地址、模型与密文一起清掉；未配置不影响阅读（P07） */
     fun delete() {
+        if (_state.value.saving || _state.value.testing) return
+        _state.value = _state.value.copy(saving = true)
         viewModelScope.launch {
             val ok = runCatching {
                 credentials.delete(CredentialStore.AI_KEY)
+                credentials.delete(CredentialStore.AI_KEY_ORIGIN)
                 settings.setAiConfig(null, null)
                 true
             }.getOrElse { false }
 
             _state.value = _state.value.copy(
+                saving = false,
                 baseUrl = if (ok) "" else _state.value.baseUrl,
                 model = if (ok) "" else _state.value.model,
                 keyInput = "",
@@ -153,16 +189,21 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
                 test = AiTestState.Untested,
                 message = if (ok) "已删除 AI 配置" else "删除失败，请重试",
             )
+            if (ok) { savedKeyOrigin = null; storedKeyExists = false }
         }
     }
 
     /** 测试连接：显式触发、只发一次最小文本；结果只描述这一次 */
     fun testConnection() {
         val snapshot = _state.value
-        if (snapshot.testing) return
+        if (snapshot.testing || snapshot.saving) return
+        if (!snapshot.hasKey) {
+            _state.value = snapshot.copy(test = AiTestState.Failed("请先填写当前供应商的API Key"))
+            return
+        }
 
         val key = snapshot.keyInput.trim().ifBlank {
-            runCatching { credentials.get(CredentialStore.AI_KEY) }.getOrNull().orEmpty()
+            runCatching { credentials.getAiKey(snapshot.baseUrl) }.getOrNull().orEmpty()
         }
         aiConfigBlockReason(snapshot.baseUrl, snapshot.model, key)?.let { reason ->
             _state.value = snapshot.copy(test = AiTestState.Failed(reason))
@@ -191,6 +232,8 @@ class AiSettingsViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private companion object {
+        const val DEEPSEEK_BASE = "https://api.deepseek.com"
+        const val DEEPSEEK_MODEL = "deepseek-flash"
         /** 最小测试文本：明确会发送少量内容并可能计费（契约 5.1） */
         const val TEST_PROMPT = "只回复两个字：收到"
     }

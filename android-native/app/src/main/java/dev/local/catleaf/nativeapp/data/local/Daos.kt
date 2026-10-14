@@ -71,6 +71,15 @@ interface ArticleDao {
     @Query("SELECT * FROM articles WHERE instanceKey = :instanceKey AND feedId = :feedId ORDER BY publishedAt DESC, localId DESC LIMIT :limit OFFSET :offset")
     suspend fun listByFeed(instanceKey: String, feedId: String, limit: Int, offset: Int): List<ArticleEntity>
 
+    /** 日摘要先按本地日期对应UTC窗口过滤，候选不受阅读首屏200条限制。 */
+    @Query("""
+        SELECT a.* FROM articles a JOIN feeds f ON f.instanceKey = a.instanceKey AND f.feedId = a.feedId
+        WHERE a.instanceKey = :instanceKey AND (:feedId IS NULL OR a.feedId = :feedId)
+        AND julianday(a.publishedAt) >= julianday(:start) AND julianday(a.publishedAt) < julianday(:end)
+        ORDER BY julianday(a.publishedAt) DESC, a.localId DESC
+    """)
+    suspend fun listForDigest(instanceKey: String, feedId: String?, start: String, end: String): List<ArticleEntity>
+
     /**
      * 阅读列表带摘要与封面（T22 F09）：LEFT JOIN 正文表，只取前 600 字符做预览原料，
      * 不逐行拉全文；正文被缓存清理过的行 previewRaw/thumbnail 自然为 null。

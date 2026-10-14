@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>猫页 · 导入结果与AI辅助阅读</title>
+<link rel="icon" href="../../assets/brand/catleaf-mark.svg">
+<style>
+[hidden]{display:none!important}
+.source .secondary{color:var(--primary)}
+.hidden{display:none!important}
+:root{color-scheme:light;--width:360px;--scale:1;--bg:#faf9f6;--surface:#fff;--ink:#252b28;--muted:#6c756f;--primary:#356a52;--soft:#e8eee7;--line:#e4e6df;--outline:#879189;--warning:#8b5a16;--error:#a54135}
+*{box-sizing:border-box}body{margin:0;background:#f1f2ee;color:#252b28;font:16px/1.5 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:24px}h1{font-size:28px;margin:0 0 8px}.note{max-width:68ch;color:#5b665f}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}label{display:flex;align-items:center;gap:8px}select,button,input{font:inherit}select{padding:8px;background:#fff;border:1px solid #879189;border-radius:8px}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--primary);outline-offset:3px}::selection{background:#c1d7c7;color:#173d2c}
+.phone{width:var(--width);max-width:100%;height:810px;background:var(--bg);color:var(--ink);font-size:calc(16px * var(--scale));display:flex;flex-direction:column;border:1px solid var(--outline);border-radius:16px;overflow:hidden}.phone.dark{color-scheme:dark;--bg:#181d1a;--surface:#232a25;--ink:#e5e9e3;--muted:#abb5ab;--primary:#94c9a6;--soft:#2b4032;--line:#39443c;--outline:#819187;--warning:#e3b66f;--error:#f0a59a}
+.system{font-size:.8em;display:flex;justify-content:space-between;padding:12px 24px}header{display:flex;align-items:center;gap:12px;padding:8px 20px;min-height:64px}header h2{font-size:1.125em;line-height:1.45;margin:0;flex:1;font-weight:600}.phone button{min-height:48px;border:0;border-radius:12px;background:transparent;color:var(--primary);padding:10px 14px;line-height:1.5}.phone .icon-button{min-width:48px;padding:12px}.icon{display:block;width:24px;height:24px;background:currentColor;mask-size:contain;mask-repeat:no-repeat;mask-position:center}.back{mask-image:url('../../assets/ui/arrow-left.svg')}.close{mask-image:url('../../assets/ui/x.svg')}.phone .primary{background:var(--primary);color:var(--bg);width:100%;font-weight:600}.phone .outline{border:1px solid var(--outline);width:100%;color:var(--ink)}.scroll{flex:1;overflow:auto;scrollbar-color:var(--outline) var(--bg);padding:12px 24px}.phone h3{font-size:1.25em;margin:24px 0 8px}.phone p{margin:8px 0;overflow-wrap:anywhere}.secondary{font-size:.875em;color:var(--muted)}.warning{color:var(--warning)}.error{color:var(--error)}.row{border-bottom:1px solid var(--line);padding:16px 0}.row strong{font-size:1em}.phone .row button{padding-left:0}.footer{padding:12px 24px 24px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line)}.phone .tabs{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 12px}.phone .tabs button{border:1px solid var(--outline);color:var(--ink);font-size:.875em}.phone .tabs .active{background:var(--soft);border-color:transparent;color:var(--primary)}.source{background:var(--soft);padding:12px 16px;border-radius:12px;margin-bottom:16px}.citations{display:flex;gap:8px;flex-wrap:wrap}.phone .citations button{background:var(--soft);min-width:48px;font-size:.875em}.question{display:block;width:100%;min-height:56px;border:1px solid var(--outline);border-radius:12px;background:var(--surface);color:var(--ink);padding:12px;margin:12px 0}.sample{border-top:1px solid var(--line);margin-top:24px;padding-top:12px}section[hidden]{display:none}.hidden{display:none}.phone .hint{color:var(--primary);padding:12px 0;font-size:.875em}
+@media(max-width:480px){main{padding:16px}.controls{font-size:14px}.phone{height:calc(100svh - 40px);min-height:650px}.scroll{padding-left:20px;padding-right:20px}}
+</style>
+<main>
+<h1>导入更清楚，阅读有依据</h1><p class="note">猫页局部原型 · 合成样例。AI由用户主动调用；已有翻译和日摘要入口保留。点击引用可查看对应原文。</p>
+<div class="controls">
+<label>页面<select id="page"><option value="opml">OPML导入结果</option><option value="overview">单篇概览</option><option value="question">问本文</option></select></label>
+<label>宽度<select id="width"><option>360</option><option>411</option></select></label>
+<label>字号<select id="scale"><option>1.0</option><option>1.3</option></select></label>
+<label>主题<select id="theme"><option value="light">浅色</option><option value="dark">深色</option></select></label>
+</div>
+<div class="phone" id="phone"><div class="system"><span>10:14</span><span>CatLeaf</span></div>
+<header><button class="icon-button" aria-label="返回"><span class="icon back"></span></button><h2 id="title">导入结果</h2><button class="icon-button" aria-label="关闭"><span class="icon close"></span></button></header>
+<nav class="tabs hidden" id="tabs" aria-label="AI阅读任务"><button data-page="overview" class="active">概览</button><button data-page="question">问本文</button></nav>
+<div class="scroll">
+<section id="opml"><h3 style="margin-top:0">部分导入完成</h3><p class="secondary">已保存200个 · 待重试1个 · 待导入36个</p><p class="secondary">导入到：本机订阅</p>
+<div class="row"><strong>设计札记</strong><p class="secondary">已保存 · 设计与阅读 · RSS可读</p></div>
+<div class="row"><strong>阅读周刊</strong><p class="warning">已保存，验证未通过</p><p class="secondary" id="reason">订阅地址返回503。源已保留，可重新验证。</p><button id="retry">重新验证</button></div>
+<div class="row"><strong>技术手记</strong><p class="secondary">已在订阅中，未改动名称</p></div><p class="secondary">已保存的源不会重新添加；剩余条目由下一批继续处理。</p></section>
+<section id="overview" hidden><div class="source"><strong>当前文章 · RSS正文</strong><p class="secondary">3个可引用段落 · 合成演示文章</p></div><p class="hint">AI概览 · 演示结果</p><h3 style="margin-top:8px">城市试点的三个要点</h3><p>试点覆盖两条公交线路；是否推广，要等后续评估。</p>
+<div class="row"><p>试点从10月开始，计划持续六个月。</p><div class="citations"><button data-source="1">原文段落1</button></div></div>
+<div class="row"><p>当前覆盖两条线路，尚未确定全市推广。</p><div class="citations"><button data-source="2">原文段落2</button></div></div>
+<div class="row"><p>评估将同时查看准点率和乘客反馈。</p><div class="citations"><button data-source="3">原文段落3</button></div></div><p class="secondary">AI可能有误，引用可回到当前文章核对。</p></section>
+<section id="question" hidden><div class="source"><strong>只依据当前文章</strong><p class="secondary">不会搜索网络，也不会读取其他订阅。</p></div><label for="input">你想了解什么？</label><input id="input" class="question" value="预算是多少钱？" maxlength="500"><button class="primary" id="ask">提问</button>
+<h3>本文未提供</h3><p id="answer">文章没有说明预算金额，无法依据当前内容回答。</p><p class="secondary">这条回答不补写未提供的事实。</p><div class="sample"><strong>也可以解释一段</strong><p class="secondary">从当前原文段落中选择，再手动请求解释。</p><button class="outline" id="explain">解释“准点率”的含义</button><p id="explanation" hidden>背景解释：准点率通常表示按计划时间到达的比例。这是词义解释，本文未给出具体计算口径或数值。</p></div></section>
+<section id="original" hidden><h3>对应原文</h3><p id="original-text"></p><button class="outline" id="return">返回AI结果</button></section>
+</div>
+<div class="footer" id="footer"><button class="primary" id="continue">继续下一批（36）</button><button class="outline" id="dismiss">返回订阅管理</button></div>
+</div><p class="note">原型不发起任何收费调用。实施版首次生成前显示来源、字符数、模型和费用提示；命中缓存不重复请求。Android和真实模型另行验收。</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);let current='opml';const paragraphs=['The city pilot starts in October and runs for six months.','It covers two bus routes. Citywide expansion has not been approved.','The evaluation will consider punctuality and passenger feedback.'];
+function show(page){current=page;for(const id of ['opml','overview','question','original'])$(id).hidden=id!==page;$('title').textContent=page==='opml'?'导入结果':'AI辅助阅读';$('tabs').classList.toggle('hidden',page==='opml');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('footer').hidden=page!=='opml';}
+$('page').onchange=()=>show($('page').value);$('width').onchange=()=>document.documentElement.style.setProperty('--width',$('width').value+'px');$('scale').onchange=()=>document.documentElement.style.setProperty('--scale',$('scale').value);$('theme').onchange=()=>$('phone').classList.toggle('dark',$('theme').value==='dark');document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>show(b.dataset.page));
+document.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{for(const id of ['overview','question'])$(id).hidden=true;$('original').hidden=false;$('original-text').textContent=paragraphs[Number(b.dataset.source)-1];});$('return').onclick=()=>show(current);
+$('retry').onclick=()=>{$('reason').textContent='RSS可读（演示状态）';$('retry').disabled=true;};$('continue').onclick=()=>{$('continue').textContent='全部批次已处理（演示状态）';$('continue').disabled=true;};$('ask').onclick=()=>$('answer').textContent='本文没有提供该问题所需的完整信息。演示原型不请求AI。';$('explain').onclick=()=>$('explanation').hidden=false;$('dismiss').onclick=()=>{$('title').textContent='订阅管理（返回演示）';};
+</script>
+</html>

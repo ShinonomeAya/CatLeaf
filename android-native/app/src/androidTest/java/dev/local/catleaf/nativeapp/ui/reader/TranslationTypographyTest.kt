@@ -56,10 +56,14 @@ class TranslationTypographyTest {
     private val original = "The quick brown fox jumps over the lazy dog, and then keeps running for a while."
     private val translation = "敏捷的棕色狐狸跳过懒狗，然后继续跑了一段路。这一句在两种字号下都会被换行成多行文本，用来比较渲染高度。"
     private var previousSettings: SettingsStore.Snapshot? = null
+    private var previousCiphertext: ByteArray? = null
+    private var previousOrigin: ByteArray? = null
 
     @Before
     fun seed() = runBlocking {
         previousSettings = settings.current()
+        previousCiphertext = CredentialStore(ctx).ciphertext(CredentialStore.AI_KEY)
+        previousOrigin = CredentialStore(ctx).ciphertext(CredentialStore.AI_KEY_ORIGIN)
         settings.setActiveScopeKind(SCOPE_KIND_INSTANCE)
         settings.setCurrentInstanceKey(instanceKey)
         // 隔离命名空间种子：文章 + 正文 + 假 AI 配置 + 完整译文缓存（键与 ReaderViewModel 的计算完全一致）
@@ -106,7 +110,7 @@ class TranslationTypographyTest {
             ),
         )
         settings.setAiConfig(baseUrl, model)
-        CredentialStore(ctx).put(CredentialStore.AI_KEY, fakeKey)
+        CredentialStore(ctx).putAiKey(baseUrl, fakeKey)
         settings.setBodyFontSize(16)
     }
 
@@ -121,7 +125,8 @@ class TranslationTypographyTest {
             settings.setOnboardingDone(previous.onboardingDone)
             settings.setBodyFontSize(previous.bodyFontSizeSp)
         }
-        runCatching { CredentialStore(ctx).delete(CredentialStore.AI_KEY) }
+        CredentialStore(ctx).restoreCiphertext(CredentialStore.AI_KEY, previousCiphertext)
+        CredentialStore(ctx).restoreCiphertext(CredentialStore.AI_KEY_ORIGIN, previousOrigin)
         Unit
     }
 

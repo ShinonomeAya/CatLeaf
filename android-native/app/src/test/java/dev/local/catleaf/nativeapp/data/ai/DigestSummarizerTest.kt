@@ -116,6 +116,7 @@ class DigestSummarizerTest {
     private val validDigest = """
         标题|测试源当日三篇文章
         概览|三篇文章都围绕同一主题。
+        主题|技术
         要点|1|第一个要点
         要点|2,3|第二个要点
     """.trimIndent()
@@ -164,6 +165,7 @@ class DigestSummarizerTest {
             """
             标题|带越界编号
             概览|一句概览。
+            主题|技术
             要点|1,99|有有效来源的要点
             """.trimIndent(),
         )
@@ -273,7 +275,7 @@ class DigestSummarizerTest {
         summarizer().summarize(request())
         assertEquals(1, server.requestCount)
 
-        val second = "标题|第二版\n概览|新概览。\n要点|2|只有第二条来源"
+        val second = "标题|第二版\n概览|新概览。\n主题|技术\n要点|2|只有第二条来源"
         enqueueDigest(second)
         val again = summarizer().summarize(request(), bypassCache = true)
         assertEquals("重新生成要真的再请求", true, again is DigestSummarizer.Outcome.Fresh)
@@ -331,5 +333,21 @@ class DigestSummarizerTest {
         assertEquals("编号不连续的冻结表也能恢复", listOf(1, 3), parsed.sources.map { it.no })
         assertEquals("链接空位不误吞标题", "标题一", parsed.sources.first().title)
         assertEquals("带链接的恢复", "https://example.com/x", parsed.sources[1].link)
+    }
+
+    @Test fun identical_event_points_merge_sources_and_old_cache_is_still_read_without_a_request() = runBlocking {
+        val parsed = DigestSummarizer.parse("标题|简报\n概览|试点进展\n主题|城市交通\n要点|1|覆盖两条线路\n要点|2|覆盖两条线路")
+        val (merged, reason) = DigestSummarizer.validate(parsed, 2)
+        assertNull(reason)
+        assertEquals(listOf(1, 2), merged!!.points.single().sourceIds)
+        assertEquals("城市交通", merged.points.single().topic)
+        val r = request()
+        val legacy = "标题|旧摘要\n概览|旧概览\n要点|1|旧要点\n来源|1|g:art-1|https://example.com/1|第一篇文章"
+        val key = DigestSummarizer.legacyCacheKey(DigestSummarizer.cacheKey(r))
+        cache.insert(AiCacheEntity(key, r.instanceKey, DigestSummarizer.TASK, r.baseUrl, r.model, "hash", "zh-Hans", "v1", legacy, true, 1))
+        val outcome = summarizer().summarize(r)
+        assertTrue(outcome is DigestSummarizer.Outcome.Cached)
+        assertEquals("旧摘要", (outcome as DigestSummarizer.Outcome.Cached).digest.title)
+        assertEquals(0, server.requestCount)
     }
 }

@@ -21,6 +21,30 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class CredentialStoreTest {
 
+    @Test fun ai_provider_binding_and_opaque_rollback_preserve_the_previous_key() {
+        store.putAiKey("https://api.deepseek.com", fakeAiKey)
+        val oldKey = store.ciphertext(CredentialStore.AI_KEY)
+        val oldOrigin = store.ciphertext(CredentialStore.AI_KEY_ORIGIN)
+        assertEquals(fakeAiKey, store.getAiKey("https://api.deepseek.com/v1"))
+        assertNull(store.getAiKey("https://another.example.org"))
+        assertEquals(listOf(CredentialStore.AI_KEY), store.names())
+        store.putAiKey("https://another.example.org", "NOT-A-REAL-NEW-KEY")
+        assertNull(store.getAiKey("https://api.deepseek.com"))
+        store.restoreCiphertext(CredentialStore.AI_KEY, oldKey)
+        store.restoreCiphertext(CredentialStore.AI_KEY_ORIGIN, oldOrigin)
+        assertEquals(fakeAiKey, store.getAiKey("https://api.deepseek.com"))
+        val atomic = android.util.AtomicFile(File(store.directoryPath(), "${CredentialStore.AI_KEY}.bin"))
+        val output = atomic.startWrite()
+        output.write(byteArrayOf(1, 2, 3))
+        atomic.failWrite(output)
+        assertEquals(fakeAiKey, store.getAiKey("https://api.deepseek.com"))
+    }
+
+    @Test fun legacy_key_without_binding_remains_readable() {
+        store.put(CredentialStore.AI_KEY, fakeAiKey)
+        assertEquals(fakeAiKey, store.getAiKey("https://api.deepseek.com"))
+    }
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private lateinit var store: CredentialStore
 

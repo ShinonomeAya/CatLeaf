@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-09-22T09:36:29.809Z",
+  "checkedAt": "2026-10-14T09:03:06.868Z",
   "assetVersion": "2.0",
   "selectedConcept": "A / curious cat",
   "scope": "SVG source and raster verification only; no Android runtime test; user design selection is recorded in README.md",
-  "productionSvgCount": 52,
-  "uiIconCount": 40,
+  "productionSvgCount": 53,
+  "uiIconCount": 41,
   "verifiedReactExports": 39,
   "externalImagesFontsScripts": 0,
   "themeGeometryConsistent": true,
@@ -93,6 +93,12 @@
       "file": "platform/splash-icon-light.svg",
       "viewBox": "0 0 288 288",
       "sha256": "4a2f635fda71c95478444c223bc4787ba354963bf00e60090771e150e9fe3c13",
+      "rasterized": true
+    },
+    {
+      "file": "ui/ai-reading.svg",
+      "viewBox": "0 0 24 24",
+      "sha256": "128b00171f36d80ff0c9048fd036bc2bd0288d26e147246d1c862ec82eddfea1",
       "rasterized": true
     },
     {

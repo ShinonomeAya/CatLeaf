@@ -1,0 +1,47 @@
+{
+  "versionName": "0.1.27",
+  "versionCode": 28,
+  "packageName": "dev.local.catleaf.nativeapp",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "status": "candidate-not-published",
+  "apk": {
+    "path": "F:\\sokusai\\CatLeaf-release-candidate\\2026-10-14\\catleaf-0.1.27-code28.apk",
+    "bytes": 28804534,
+    "sha256": "bd9b6db0bc75abc3964bb26ec5364322ee181dc4e537ba4d4a175ab552d6ddff",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "installedPhysicalApkSha256": "bd9b6db0bc75abc3964bb26ec5364322ee181dc4e537ba4d4a175ab552d6ddff"
+  },
+  "validation": {
+    "unitTests": 204,
+    "unitSuites": 33,
+    "unitFailures": 0,
+    "unitErrors": 0,
+    "unitSkipped": 0,
+    "lintErrors": 0,
+    "lintWarnings": 29,
+    "lintHints": 2,
+    "relatedIsolatedAndroid10Tests": 17,
+    "nativeMatrixTests": 8,
+    "nativeMatrixGroups": 8,
+    "nativeScreenshots": 80,
+    "legacyCachedSourceIdsRetained": 40,
+    "physicalDevice": "Android16 test phone A, same-signer data-preserving release install",
+    "physicalWebView": "143.0.7499.192",
+    "isolatedWebView": "74.0.3729.185",
+    "physicalDeepSeekRequestsThisBatch": 5,
+    "physicalRequestsBeforeFinalPromptRefine": 4,
+    "physicalRequestsWithFinalApk": 1,
+    "model": "deepseek-flash",
+    "provider": "https://api.deepseek.com",
+    "fullG7": false,
+    "formalG8": false
+  },
+  "pending": [
+    "F09 commenter failure sample and volunteer trials",
+    "additional article types, OEM/WebView menu coverage and selected-fragment model evaluation",
+    "original complete G7/G8 and browser/system installation-chain gaps"
+  ],
+  "evidence": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-ai-insight\\",
+  "evidenceIndex": "F:\\sokusai\\CatWeb-local-archive\\2026-10-14-ai-insight\\验收证据索引.md"
+}

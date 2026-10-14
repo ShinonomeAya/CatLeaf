@@ -356,10 +356,8 @@ fun CatLeafApp() {
                         showDiscovery = true
                     },
                     onOpenDigest = { feedId, date ->
-                        if (feedId != null) {
-                            digestFeedId = feedId
-                            digestDate = date
-                        }
+                        digestFeedId = feedId ?: DigestViewModel.ALL_FEEDS
+                        digestDate = date
                     },
                     onOpenUsage = { showUsage = true },
                     onOpenSearch = { feedId, dateScope, unreadOnly, starredOnly ->

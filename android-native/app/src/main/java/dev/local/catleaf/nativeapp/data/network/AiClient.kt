@@ -44,7 +44,14 @@ class AiClient(
 
             try {
                 clientFactory(apiKey).newCall(request).execute().use { response ->
-                    val text = response.body?.string().orEmpty()
+                    if ((response.body?.contentLength() ?: -1) > MAX_RESPONSE_BYTES) {
+                        return@withContext Result.failure(EndpointError.Unreachable("AI响应超过1 MiB上限"))
+                    }
+                    val source = response.body?.source()
+                    if (source?.request(MAX_RESPONSE_BYTES + 1) == true) {
+                        return@withContext Result.failure(EndpointError.Unreachable("AI响应超过1 MiB上限"))
+                    }
+                    val text = source?.buffer?.readUtf8().orEmpty()
                     when {
                         response.code == 401 || response.code == 403 ->
                             Result.failure(EndpointError.Unauthorized())
@@ -132,6 +139,7 @@ class AiClient(
     }
 
     companion object {
+        const val MAX_RESPONSE_BYTES = 1024L * 1024
         private val JSON_MEDIA = "application/json; charset=utf-8".toMediaType()
 
         /** 允许键值之间有空格：`"finish_reason": "length"` */

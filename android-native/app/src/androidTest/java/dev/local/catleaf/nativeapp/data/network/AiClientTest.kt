@@ -19,7 +19,7 @@ class AiClientTest {
 
     private val fakeKey = "FAKE-AI-KEY-protocol-test"
 
-    private fun clientReturning(code: Int, body: String) = AiClient {
+    private fun clientReturning(code: Int, body: String, unknownLength: Boolean = false) = AiClient {
         okhttp3.OkHttpClient.Builder()
             .followRedirects(false)
             .addInterceptor { chain ->
@@ -28,10 +28,23 @@ class AiClientTest {
                     .protocol(okhttp3.Protocol.HTTP_1_1)
                     .code(code)
                     .message("stub")
-                    .body(body.toResponseBody("application/json".toMediaType()))
+                    .body(if (!unknownLength) body.toResponseBody("application/json".toMediaType()) else object : okhttp3.ResponseBody() {
+                        override fun contentType() = "application/json".toMediaType()
+                        override fun contentLength() = -1L
+                        override fun source() = okio.Buffer().writeUtf8(body)
+                    })
                     .build()
             }
             .build()
+    }
+
+    @Test fun oversized_declared_and_unknown_length_responses_are_rejected() = kotlinx.coroutines.runBlocking {
+        for (unknown in listOf(false, true)) {
+            val result = clientReturning(200, "x".repeat(AiClient.MAX_RESPONSE_BYTES.toInt() + 1), unknown)
+                .chat("https://api.example.org", "model", fakeKey, "test")
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()!!.message!!.contains("1 MiB"))
+        }
     }
 
     @Test

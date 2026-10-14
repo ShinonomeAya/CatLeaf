@@ -78,10 +78,12 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel, onBack: () -> Unit) {
         }
 
         // UIR12：标签在上、框内示例占位、辅助说明在下（原型 12）
+        TextButton(onClick = viewModel::useDeepSeek, enabled = !state.testing && !state.saving) { Text("填入DeepSeek配置") }
         LabeledField(
             label = stringResource(R.string.ai_base_url_label),
             value = state.baseUrl,
             onValueChange = viewModel::onBaseUrlChange,
+            enabled = !state.testing && !state.saving,
             placeholder = stringResource(R.string.ai_base_url_hint),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
         )
@@ -90,6 +92,7 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel, onBack: () -> Unit) {
             label = stringResource(R.string.ai_model_label),
             value = state.model,
             onValueChange = viewModel::onModelChange,
+            enabled = !state.testing && !state.saving,
             placeholder = stringResource(R.string.ai_model_placeholder),
             supporting = stringResource(R.string.ai_model_hint),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -99,6 +102,7 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel, onBack: () -> Unit) {
             label = stringResource(R.string.ai_key_label),
             value = state.keyInput,
             onValueChange = viewModel::onKeyChange,
+            enabled = !state.testing && !state.saving,
             placeholder = stringResource(
                 if (state.keySaved) R.string.ai_key_saved_placeholder else R.string.ai_key_hint,
             ),
@@ -127,7 +131,7 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel, onBack: () -> Unit) {
         SecondaryButton(
             text = stringResource(if (state.testing) R.string.ai_testing else R.string.ai_test_action),
             onClick = viewModel::testConnection,
-            enabled = !state.testing,
+            enabled = !state.testing && !state.saving,
         )
         Text(
             stringResource(R.string.ai_test_cost_note),
@@ -138,11 +142,12 @@ fun AiSettingsScreen(viewModel: AiSettingsViewModel, onBack: () -> Unit) {
         PrimaryButton(
             text = stringResource(R.string.ai_save_action),
             onClick = viewModel::save,
-            enabled = !state.saving,
+            enabled = !state.saving && !state.testing,
         )
 
         TextButton(
             onClick = viewModel::delete,
+            enabled = !state.testing && !state.saving,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) {
             Text(
