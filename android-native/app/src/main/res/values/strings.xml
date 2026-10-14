@@ -145,17 +145,13 @@
     <string name="opml_result_title">导入结果</string>
     <string name="opml_preview_counts">%1$d 个条目 · 可导入 %2$d 个</string>
     <string name="opml_preview_merge_hint">多级目录将合并为一级分组名称。</string>
-    <string name="opml_selected_summary">已选 %1$d 个 · 跳过 %2$d 个</string>
     <string name="opml_start_import">开始导入（%1$d）</string>
     <string name="opml_importing">正在处理 %1$d/%2$d</string>
-    <string name="opml_result_summary">已导入 %1$d 个 · 失败 %2$d 个 · 跳过 %3$d 个</string>
     <string name="opml_result_partial">部分导入完成</string>
     <string name="opml_result_all_added">导入完成</string>
     <string name="opml_result_added_unverified">已导入，部分暂时无法读取</string>
     <string name="opml_outcome_added">已添加</string>
     <string name="opml_outcome_verified">RSS 可读</string>
-    <string name="opml_outcome_unverified_local">暂时无法读取，可在订阅管理重试</string>
-    <string name="opml_outcome_unverified">已登记，验证未通过，可在订阅管理重试</string>
     <string name="opml_target_local">导入到：本机订阅（仅本设备）</string>
     <string name="opml_target_instance">导入到：当前自有实例</string>
     <string name="opml_outcome_exists">已在订阅中，未改动</string>
@@ -163,7 +159,7 @@
     <string name="opml_outcome_cancelled">已取消</string>
     <string name="opml_view_skipped">查看跳过项（%1$d）</string>
     <string name="opml_retry_failed">重试失败项（%1$d）</string>
-    <string name="opml_keep_hint">已导入的订阅会保留。重试只处理失败条目。</string>
+    <string name="opml_keep_hint">已保存的订阅会保留。每次最多重试200项，未处理项可继续重试。</string>
     <string name="opml_back_to_manager">返回订阅管理</string>
     <string name="opml_retry">重试</string>
     <string name="opml_select_all">全选 / 取消全选</string>
@@ -453,7 +449,7 @@
     <string name="digest_choose_date">选择日期</string>
     <string name="digest_need_date">先选择一天；只有带明确发布日期的文章会参与这一天的摘要。</string>
     <string name="digest_timezone">时区 %1$s</string>
-    <string name="digest_partial_scope">基于当前已加载内容，可能不包含该日全部文章。</string>
+    <string name="digest_partial_scope">基于本机已保存内容，可能不包含该日全部文章。</string>
     <string name="digest_loaded_count">已加载 %1$,d 篇</string>
     <string name="digest_loaded_none">已加载内容里没有这一天的文章</string>
     <string name="digest_item_body">正文 · %1$,d 字符</string>

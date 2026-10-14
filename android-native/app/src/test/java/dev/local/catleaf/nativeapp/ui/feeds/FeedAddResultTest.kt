@@ -1,5 +1,6 @@
 package dev.local.catleaf.nativeapp.ui.feeds
 
+import dev.local.catleaf.nativeapp.data.network.describeVerifyError
 import dev.local.catleaf.nativeapp.data.network.EndpointError
 import dev.local.catleaf.nativeapp.data.network.PublicFetch
 import dev.local.catleaf.nativeapp.data.rss.FeedParser

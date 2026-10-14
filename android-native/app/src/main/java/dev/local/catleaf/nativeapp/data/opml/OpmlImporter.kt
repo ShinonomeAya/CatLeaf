@@ -4,6 +4,7 @@ import dev.local.catleaf.nativeapp.data.FeedRegistry
 import dev.local.catleaf.nativeapp.data.network.EndpointError
 import dev.local.catleaf.nativeapp.data.network.FeedApiError
 import dev.local.catleaf.nativeapp.data.network.EndpointPolicy
+import dev.local.catleaf.nativeapp.data.network.describeVerifyError
 
 /**
  * OPML 串行导入（契约 §6；本机与实例共用，面向 [FeedRegistry]）。
@@ -23,12 +24,13 @@ class OpmlImporter(
 
     sealed class Outcome {
         /** [verified]=false：已登记但 RSS 验证未通过（契约 8.2 登记与验证分开报），源保留、可在订阅管理重试 */
-        data class Added(val feedId: String, val verified: Boolean = true) : Outcome()
+        data class Added(val feedId: String, val verified: Boolean = true, val verifyReason: String? = null) : Outcome()
         data class AlreadyExists(val reason: String) : Outcome()
         data class Failed(val reason: String) : Outcome()
         /** 请求超时：服务端可能已写入，必须提示“结果待确认”，不能断言失败 */
         object PendingConfirm : Outcome()
         object Cancelled : Outcome()
+        object Deferred : Outcome()
         /** 预览中不可导入（无效/重复）或用户未勾选；[reason] 供结果页“查看跳过项”逐条说明 */
         data class SkippedInvalid(val reason: String = "已跳过") : Outcome()
     }
@@ -46,9 +48,12 @@ class OpmlImporter(
         val failed: Int get() = items.count { it.outcome is Outcome.Failed }
         val pending: Int get() = items.count { it.outcome is Outcome.PendingConfirm }
         val cancelled: Int get() = items.count { it.outcome is Outcome.Cancelled }
+        val unverified: Int get() = items.count { (it.outcome as? Outcome.Added)?.verified == false }
+        val retryable: Int get() = failed + pending + unverified
+        val remaining: Int get() = items.count { it.outcome is Outcome.Deferred }
 
         /** 是否存在“结果待确认”的条目：决定是否给出重试入口 */
-        val needsRetry: Boolean get() = pending > 0
+        val needsRetry: Boolean get() = retryable > 0
     }
 
     /**
@@ -61,12 +66,15 @@ class OpmlImporter(
         onProgress: (ItemResult, Int, Int) -> Unit = { _, _, _ -> },
         isCancelled: () -> Boolean = { false },
     ): Report {
+        if (entries.size > Opml.MAX_BATCH_ENTRIES) return Report(entries.map {
+            ItemResult(it.title, it.xmlUrl, it.group, Outcome.Failed("每批最多导入 ${Opml.MAX_BATCH_ENTRIES} 条"))
+        })
         val results = mutableListOf<ItemResult>()
 
         // 导入前读一次去重权威列表（实例=服务端；本机=Room）：这是去重的权威来源
         val remote = registry.knownUrls().getOrElse {
             return Report(
-                entries.map { e -> ItemResult(e.title, e.xmlUrl, e.group, Outcome.Failed("无法读取现有订阅：${it.message}")) },
+                entries.map { e -> ItemResult(e.title, e.xmlUrl, e.group, Outcome.Failed("无法读取现有订阅：${describeVerifyError(it)}")) },
             )
         }
         val knownUrls = remote.toMutableList()
@@ -105,7 +113,7 @@ class OpmlImporter(
             customTitle = entry.title.take(Opml.MAX_NAME_LENGTH),
         )
         return added.fold(
-            onSuccess = { Outcome.Added(it.feedId, it.verified) },
+            onSuccess = { Outcome.Added(it.feedId, it.verified, if (it.verified) null else describeVerifyError(it.verifyError)) },
             onFailure = { error ->
                 when (error) {
                     // 服务端已存在同 URL：说明此前其实写进去了（例如上次超时后重试）
@@ -127,23 +135,34 @@ class OpmlImporter(
      * 对“结果待确认”的条目重试：先重新读取去重权威列表，能按 URL 关联上的记为已存在，
      * 其余再走一次幂等新增（实例模式服务端对重复 URL 返回 409，不会产生第二个源）。
      */
-    suspend fun retryUnresolved(report: Report, isCancelled: () -> Boolean = { false }): Report {
-        val unresolvedIndices = report.items.indices.filter { index ->
-            report.items[index].outcome.let { it is Outcome.PendingConfirm || it is Outcome.Failed }
+    suspend fun retryUnresolved(report: Report, isCancelled: () -> Boolean = { false }, target: ItemResult? = null): Report {
+        val indices = if (target == null) report.items.indices.toList() else {
+            if (EndpointPolicy.normalizeFeedUrl(target.xmlUrl) == null) return report
+            listOf(report.items.indices.singleOrNull { report.items[it] == target } ?: return report)
         }
+        val unresolvedIndices = indices.filter { index ->
+            report.items[index].outcome.let { it is Outcome.PendingConfirm || it is Outcome.Failed || (it as? Outcome.Added)?.verified == false }
+        }.take(Opml.MAX_BATCH_ENTRIES)
         if (unresolvedIndices.isEmpty()) return report
 
-        val remoteUrls = registry.knownUrls().getOrElse {
-            return report
-        }.toMutableList()
+        val needsReconcile = unresolvedIndices.any { report.items[it].outcome !is Outcome.Added }
+        val remoteUrls = if (needsReconcile) registry.knownUrls().getOrNull()?.toMutableList()
+            else mutableListOf()
 
         val items = report.items.toMutableList()
         for (index in unresolvedIndices) {
             val item = items[index]
-            if (isCancelled()) {
-                items[index] = item.copy(outcome = Outcome.Cancelled)
+            if (isCancelled()) break
+            val saved = item.outcome as? Outcome.Added
+            if (saved != null) {
+                val checked = registry.verify(saved.feedId)
+                items[index] = item.copy(outcome = saved.copy(
+                    verified = checked.isSuccess,
+                    verifyReason = if (checked.isSuccess) null else describeVerifyError(checked.exceptionOrNull()),
+                ))
                 continue
             }
+            if (remoteUrls == null) continue
             val outcome = if (remoteUrls.any { EndpointPolicy.isSameFeedUrl(it, item.xmlUrl) }) {
                 Outcome.AlreadyExists("核对后确认已存在")
             } else {

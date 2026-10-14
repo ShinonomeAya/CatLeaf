@@ -24,6 +24,7 @@ data class OpmlUiState(
     val document: Opml.Document? = null,
     /** 被勾选的条目在 [Opml.Document.entries] 中的下标 */
     val selected: Set<Int> = emptySet(),
+    val processed: Set<Int> = emptySet(),
     val importing: Boolean = false,
     val progressDone: Int = 0,
     val progressTotal: Int = 0,
@@ -43,11 +44,14 @@ class OpmlViewModel(application: Application) : AndroidViewModel(application) {
     private var importer: OpmlImporter? = null
     private var registry: dev.local.catleaf.nativeapp.data.FeedRegistry? = null
     private var importTicket: Any? = null
+    private val results = mutableMapOf<Int, OpmlImporter.ItemResult>()
+    private var batchIndices: Set<Int> = emptySet()
 
     /** 由界面在打开时注入（实例或本机的 registry/importer），避免这里重复解析范围配置 */
     fun attach(registry: dev.local.catleaf.nativeapp.data.FeedRegistry, importer: OpmlImporter) {
         if (this.registry != null && this.registry !== registry) {
             importTicket = null
+            results.clear()
             _state.value = OpmlUiState()
         }
         this.registry = registry
@@ -60,16 +64,20 @@ class OpmlViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun loadDocument(uri: Uri) {
         val registryRef = registry
+        val ticket = Any().also { importTicket = it }
+        results.clear()
         viewModelScope.launch {
             _state.value = OpmlUiState(parsing = true)
-            val bytes = withContext(Dispatchers.IO) {
+            val read = withContext(Dispatchers.IO) {
                 runCatching {
-                    getApplication<Application>().contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                }.getOrNull()
+                    getApplication<Application>().contentResolver.openInputStream(uri)?.use(Opml::readBytes)
+                        ?: error("无法读取所选文件")
+                }
             }
-            if (bytes == null) {
-                if (registry !== registryRef) return@launch
-                _state.value = OpmlUiState(errorMessage = "无法读取所选文件")
+            if (read.isFailure) {
+                if (registry !== registryRef || importTicket !== ticket) return@launch
+                val error = read.exceptionOrNull()
+                _state.value = OpmlUiState(errorMessage = (error as? Opml.OpmlError)?.message ?: "无法读取所选文件")
                 return@launch
             }
 
@@ -77,12 +85,13 @@ class OpmlViewModel(application: Application) : AndroidViewModel(application) {
             val known = withContext(Dispatchers.IO) {
                 runCatching { registryRef?.local()?.map { it.url } }.getOrNull().orEmpty()
             }
-            if (registry !== registryRef) return@launch
+            if (registry !== registryRef || importTicket !== ticket) return@launch
 
-            Opml.parse(bytes, knownUrls = known).fold(
+            Opml.parse(read.getOrThrow(), knownUrls = known).fold(
                 onSuccess = { doc ->
                     // 默认勾选“有效且未重复”的条目
-                    val preselect = doc.entries.indices.filter { doc.entries[it].selectable }.toSet()
+                    val preselect = doc.entries.indices.filter { doc.entries[it].selectable }.take(Opml.MAX_BATCH_ENTRIES).toSet()
+                    batchIndices = preselect
                     _state.value = OpmlUiState(document = doc, selected = preselect)
                 },
                 onFailure = { e ->
@@ -94,21 +103,29 @@ class OpmlViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggle(index: Int) {
         val doc = _state.value.document ?: return
-        if (!doc.entries[index].selectable) return
+        if (_state.value.importing || index !in doc.entries.indices || index in results || !doc.entries[index].selectable) return
         val next = _state.value.selected.toMutableSet()
-        if (!next.add(index)) next.remove(index)
+        if (index in next) next.remove(index)
+        else if (next.size < Opml.MAX_BATCH_ENTRIES) next.add(index)
+        else return
+        batchIndices = batchIndices + index
         _state.value = _state.value.copy(selected = next)
     }
 
     fun selectAll() {
         val doc = _state.value.document ?: return
-        val all = doc.entries.indices.filter { doc.entries[it].selectable }.toSet()
+        if (_state.value.importing) return
+        val all = doc.entries.indices.filter { doc.entries[it].selectable && it !in results }.take(Opml.MAX_BATCH_ENTRIES).toSet()
         val everySelected = all.isNotEmpty() && all.all { it in _state.value.selected }
         _state.value = _state.value.copy(selected = if (everySelected) emptySet() else all)
+        batchIndices = all
     }
 
     fun startImport() {
         val entries = _state.value.selectedEntries
+        val indices = _state.value.selected.sorted()
+        val offered = batchIndices
+        val document = _state.value.document ?: return
         val imp = importer
         if (entries.isEmpty() || imp == null || _state.value.importing) return
 
@@ -131,38 +148,58 @@ class OpmlViewModel(application: Application) : AndroidViewModel(application) {
             )
             withContext(Dispatchers.IO) { runCatching { registryRef?.refresh() } }
             if (importTicket !== ticket) return@launch
-            _state.value = _state.value.copy(importing = false, report = report.withSkipped(skippedEntries))
+            indices.zip(report.items).forEach { (index, item) -> results[index] = item }
+            (offered - indices.toSet()).forEach { index ->
+                val entry = document.entries[index]
+                results[index] = OpmlImporter.ItemResult(entry.title, entry.xmlUrl, entry.group, OpmlImporter.Outcome.SkippedInvalid("未勾选"))
+            }
+            val combined = OpmlImporter.Report(document.entries.mapIndexed { index, entry ->
+                results[index] ?: OpmlImporter.ItemResult(entry.title, entry.xmlUrl, entry.group,
+                    if (entry.selectable) OpmlImporter.Outcome.Deferred else OpmlImporter.Outcome.SkippedInvalid(entry.skipReason()))
+            })
+            _state.value = _state.value.copy(importing = false, report = combined, processed = results.keys.toSet())
         }
     }
 
-    /** 预览里未进入导入的条目（无效/重复/未勾选）：结果页按原因计入“跳过”，不发请求 */
-    private val skippedEntries: List<Opml.Entry>
-        get() = _state.value.document?.entries.orEmpty()
-            .filterIndexed { i, _ -> i !in _state.value.selected }
-
-    private fun OpmlImporter.Report.withSkipped(entries: List<Opml.Entry>) = OpmlImporter.Report(
-        items + entries.map { e -> OpmlImporter.ItemResult(e.title, e.xmlUrl, e.group, OpmlImporter.Outcome.SkippedInvalid(e.skipReason())) },
-    )
+    fun nextBatch() {
+        val doc = _state.value.document ?: return
+        if (_state.value.importing) return
+        val next = doc.entries.indices.filter { doc.entries[it].selectable && it !in results }
+            .take(Opml.MAX_BATCH_ENTRIES).toSet()
+        if (next.isEmpty()) return
+        batchIndices = next
+        _state.value = _state.value.copy(report = null, selected = next, progressDone = 0, progressTotal = 0)
+    }
 
     /** 重试失败或待确认条目：先核对远端列表再决定关联或新增（契约 §6） */
-    fun retryUnresolved() {
+    fun retryUnresolved(target: OpmlImporter.ItemResult? = null) {
         val report = _state.value.report ?: return
         val imp = importer ?: return
         if (_state.value.importing) return
+        if (target != null) {
+            if (report.items.count { it == target } != 1) return
+            if (dev.local.catleaf.nativeapp.data.network.EndpointPolicy.normalizeFeedUrl(target.xmlUrl) == null) return
+            if (target.outcome.let { it !is OpmlImporter.Outcome.PendingConfirm && it !is OpmlImporter.Outcome.Failed && (it as? OpmlImporter.Outcome.Added)?.verified != false }) return
+        }
 
         _state.value = _state.value.copy(importing = true)
         val ticket = Any().also { importTicket = it }
         val registryRef = registry
         viewModelScope.launch {
-            val retried = imp.retryUnresolved(report, isCancelled = { importTicket !== ticket })
+            val retried = imp.retryUnresolved(report, isCancelled = { importTicket !== ticket }, target = target)
             withContext(Dispatchers.IO) { runCatching { registryRef?.refresh() } }
             if (importTicket !== ticket) return@launch
+            retried.items.forEachIndexed { index, item ->
+                if (item.outcome !is OpmlImporter.Outcome.Deferred) results[index] = item
+            }
             _state.value = _state.value.copy(importing = false, report = retried)
         }
     }
 
     fun dismiss() {
         importTicket = null
+        results.clear()
+        batchIndices = emptySet()
         _state.value = OpmlUiState()
     }
 

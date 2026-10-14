@@ -131,6 +131,7 @@ fun FeedManagerScreen(
             onToggleAll = { opmlViewModel?.selectAll() },
             onStart = { opmlViewModel?.startImport() },
             onDismiss = { opmlViewModel?.dismiss() },
+            processed = opmlState.processed,
         )
         return
     }
@@ -139,7 +140,8 @@ fun FeedManagerScreen(
             report = report,
             importing = opmlState.importing,
             localOnly = state.localOnly,
-            onRetry = { opmlViewModel?.retryUnresolved() },
+            onRetry = { opmlViewModel?.retryUnresolved(it) },
+            onNextBatch = { opmlViewModel?.nextBatch() },
             onDismiss = { opmlViewModel?.dismiss() },
         )
         return

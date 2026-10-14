@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -59,9 +60,9 @@ fun OpmlPreviewSurface(
     onToggleAll: () -> Unit,
     onStart: () -> Unit,
     onDismiss: () -> Unit,
+    processed: Set<Int> = emptySet(),
 ) {
-    val importable = document.entries.count { it.selectable }
-    val skipped = document.entries.size - importable
+    val importable = document.entries.indices.count { document.entries[it].selectable && it !in processed }
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
         Row(
@@ -100,6 +101,11 @@ fun OpmlPreviewSurface(
                 modifier = Modifier.padding(12.dp),
             )
         }
+        if (importable > Opml.MAX_BATCH_ENTRIES) Text(
+            "每批最多 ${Opml.MAX_BATCH_ENTRIES} 条，导入后可继续下一批。",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+        )
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             itemsIndexed(document.entries) { index, entry ->
@@ -110,7 +116,8 @@ fun OpmlPreviewSurface(
                         .fillMaxWidth()
                         .toggleable(
                             value = index in selected,
-                            enabled = entry.selectable && !importing,
+                            enabled = entry.selectable && index !in processed && !importing &&
+                                (index in selected || selected.size < Opml.MAX_BATCH_ENTRIES),
                             role = Role.Checkbox,
                             onValueChange = { onToggle(index) },
                         )
@@ -120,7 +127,8 @@ fun OpmlPreviewSurface(
                     Checkbox(
                         checked = index in selected,
                         onCheckedChange = null,
-                        enabled = entry.selectable && !importing,
+                        enabled = entry.selectable && index !in processed && !importing &&
+                            (index in selected || selected.size < Opml.MAX_BATCH_ENTRIES),
                     )
                     Spacer(Modifier.size(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -132,6 +140,7 @@ fun OpmlPreviewSurface(
                         )
                         Text(
                             text = when {
+                                index in processed -> "本次已处理"
                                 entry.invalidReason != null -> "${entry.invalidReason}，将跳过"
                                 entry.duplicateOf != null -> "${entry.duplicateOf}，将跳过"
                                 entry.groupTooLong -> "分组名超过 ${Opml.MAX_GROUP_LENGTH} 字符，请调整后再导入"
@@ -150,14 +159,14 @@ fun OpmlPreviewSurface(
         Divider()
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                stringResource(R.string.opml_selected_summary, selected.size, document.entries.size - selected.size),
+                "本批已选 ${selected.size} 个 · 剩余可选 ${importable - selected.size} 个",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(
                 onClick = onStart,
                 enabled = selected.isNotEmpty() && !importing,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             ) {
                 if (importing) {
                     CircularProgressIndicator(
@@ -185,16 +194,17 @@ fun OpmlResultSurface(
     report: OpmlImporter.Report,
     importing: Boolean,
     localOnly: Boolean,
-    onRetry: () -> Unit,
+    onRetry: (OpmlImporter.ItemResult?) -> Unit,
     onDismiss: () -> Unit,
+    onNextBatch: () -> Unit = {},
 ) {
     var showSkipped by remember { mutableStateOf(false) }
     val skipped = report.items.filter { it.outcome is OpmlImporter.Outcome.SkippedInvalid }
-    val shown = report.items.filterNot { it.outcome is OpmlImporter.Outcome.SkippedInvalid }
-    val retryable = report.failed + report.pending
+    val shown = report.items.filterNot { it.outcome is OpmlImporter.Outcome.SkippedInvalid || it.outcome is OpmlImporter.Outcome.Deferred }
+    val retryable = report.retryable
     // 已登记但 RSS 暂不可读：导入本身完成，但不能用全绿“导入完成”掩盖验证结果（契约 8.2）
     val unverified = report.items.count { (it.outcome as? OpmlImporter.Outcome.Added)?.verified == false }
-    val incomplete = retryable > 0 || unverified > 0
+    val incomplete = retryable > 0 || report.remaining > 0
 
     Column(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
         Row(
@@ -224,7 +234,7 @@ fun OpmlResultSurface(
             Text(
                 stringResource(
                     when {
-                        retryable > 0 -> R.string.opml_result_partial
+                        report.failed + report.pending > 0 || report.remaining > 0 -> R.string.opml_result_partial
                         unverified > 0 -> R.string.opml_result_added_unverified
                         else -> R.string.opml_result_all_added
                     },
@@ -233,7 +243,8 @@ fun OpmlResultSurface(
                 textAlign = TextAlign.Center,
             )
             Text(
-                stringResource(R.string.opml_result_summary, report.added, report.failed + report.pending, skipped.size),
+                "已保存 ${report.added} 个 · 待重试 $retryable 个 · 跳过 ${skipped.size} 个" +
+                    if (report.remaining > 0) " · 待导入 ${report.remaining} 个" else "",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -270,8 +281,8 @@ fun OpmlResultSurface(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    if (pending || failed) {
-                        TextButton(onClick = onRetry, enabled = !importing) { Text(stringResource(R.string.opml_retry)) }
+                    if (pending || failed || unverified) {
+                        TextButton(onClick = { onRetry(item) }, enabled = !importing) { Text(stringResource(R.string.opml_retry)) }
                     }
                 }
                 Divider(modifier = Modifier.padding(start = 24.dp))
@@ -317,6 +328,10 @@ fun OpmlResultSurface(
 
         Divider()
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (report.remaining > 0) Button(
+                onClick = onNextBatch, enabled = !importing,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) { Text("继续下一批（${minOf(Opml.MAX_BATCH_ENTRIES, report.remaining)}）") }
             // 没有可重试项时不放禁用的「重试失败项（0）」：原型 11-v2 只在有失败时给重试；
             // 360dp/1.3 倍下这块固定区原先挤掉大半列表（VR6）
             if (retryable > 0) {
@@ -326,9 +341,9 @@ fun OpmlResultSurface(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Button(
-                    onClick = onRetry,
+                    onClick = { onRetry(null) },
                     enabled = !importing,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 ) {
                     if (importing) {
                         CircularProgressIndicator(
@@ -363,13 +378,13 @@ private fun outcomeText(outcome: OpmlImporter.Outcome, group: String, localOnly:
         group.takeIf { it.isNotBlank() },
         when {
             outcome.verified -> stringResource(R.string.opml_outcome_verified)
-            localOnly -> stringResource(R.string.opml_outcome_unverified_local)
-            else -> stringResource(R.string.opml_outcome_unverified)
+            else -> "验证未通过：${outcome.verifyReason ?: "未知原因"}"
         },
     ).joinToString(" · ")
     is OpmlImporter.Outcome.AlreadyExists -> outcome.reason
     is OpmlImporter.Outcome.PendingConfirm -> stringResource(R.string.opml_outcome_pending)
     is OpmlImporter.Outcome.Cancelled -> stringResource(R.string.opml_outcome_cancelled)
+    is OpmlImporter.Outcome.Deferred -> "等待后续批次"
     is OpmlImporter.Outcome.Failed -> outcome.reason
     is OpmlImporter.Outcome.SkippedInvalid -> outcome.reason
 }

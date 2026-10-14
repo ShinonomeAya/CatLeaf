@@ -74,6 +74,53 @@ class OpmlTest {
 
     // ── 解析 ──────────────────────────────────────────────────────
 
+    @dev.local.catleaf.nativeapp.ManualProbe
+    @Test fun public_microsoft_sample_parses_and_keeps_http_entries_flagged() {
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val fixture = context.cacheDir.resolve("public-microsoft.opml").readBytes()
+        val document = Opml.parse(fixture).getOrThrow()
+        assertEquals(20, document.entries.size)
+        assertEquals(setOf("News", "Leisure", "Sports", "Tech"), document.entries.map { it.group }.toSet())
+        assertTrue(document.entries.all { !it.selectable && it.invalidReason == "不是有效的 HTTPS 地址" })
+    }
+
+    @Test fun extension_attributes_are_ignored_but_web_scraping_configuration_is_not_mislabelled_as_rss() {
+        val doc = Opml.parse(bytes(sample(body = """
+            <outline xmlns:frss="https://freshrss.org/opml" type="rss" text="订阅" xmlUrl="https://feeds.example.org/rss" frss:priority="main"/>
+            <outline xmlns:frss="https://freshrss.org/opml" type="HTML+XPath" text="网页配置" xmlUrl="https://www.example.org/page" frss:xPathItem="//article"/>
+        """.trimIndent()))).getOrThrow()
+        assertTrue(doc.entries[0].selectable)
+        assertFalse(doc.entries[1].selectable)
+        assertTrue(doc.entries[1].invalidReason!!.contains("其他抓取配置"))
+    }
+
+    @Test fun parses_bom_and_explicit_utf16_without_losing_chinese_groups() {
+        val xml = sample()
+        val utf8Bom = byteArrayOf(0xef.toByte(), 0xbb.toByte(), 0xbf.toByte()) + bytes(xml)
+        assertEquals("设计与阅读 / 子分组", Opml.parse(utf8Bom).getOrThrow().entries[1].group)
+        for (charset in listOf(Charsets.UTF_16, Charsets.UTF_16LE, Charsets.UTF_16BE)) {
+            val encoded = xml.replace("UTF-8", charset.name()).toByteArray(charset)
+            assertEquals("我的订阅", Opml.parse(encoded).getOrThrow().title)
+        }
+        assertTrue(Opml.parse(bytes(xml.replace("UTF-8", "ISO-8859-1"))).isFailure)
+    }
+
+    @Test fun rejects_non_opml_and_declarations_beyond_the_old_prefix_budget() {
+        assertTrue(Opml.parse(bytes("<html><body><outline xmlUrl=\"https://a.example.org/rss\"/></body></html>")).isFailure)
+        assertTrue(Opml.parse(bytes("<opml><head/></opml>")).isFailure)
+        val padded = "<!--" + " ".repeat(5000) + "-->\n<!DOCTYPE opml><opml><body/></opml>"
+        assertTrue(Opml.parse(bytes(padded)).exceptionOrNull() is Opml.OpmlError.DoctypeForbidden)
+    }
+
+    @Test fun accepts_large_subscription_lists_but_rejects_entry_overflow() {
+        fun list(count: Int) = sample(body = (1..count).joinToString("\n") {
+            "<outline text=\"源$it\" xmlUrl=\"https://feeds.example.org/$it\"/>"
+        })
+        assertEquals(201, Opml.parse(bytes(list(201))).getOrThrow().entries.size)
+        assertEquals(2000, Opml.parse(bytes(list(2000))).getOrThrow().entries.size)
+        assertTrue(Opml.parse(bytes(list(2001))).exceptionOrNull() is Opml.OpmlError.TooManyEntries)
+    }
+
     @Test
     fun parses_title_entries_and_group_paths() {
         val doc = Opml.parse(bytes(sample())).getOrThrow()
@@ -336,7 +383,7 @@ class OpmlTest {
         assertEquals("失败 1 条", 1, report.failed)
         assertEquals("已有源在解析阶段即被判为不可导入", 1,
             report.items.count { it.outcome is OpmlImporter.Outcome.SkippedInvalid })
-        assertFalse(report.needsRetry)
+        assertTrue(report.needsRetry)
         // 逐条结果能定位到具体条目
         assertTrue(report.items[0].outcome is OpmlImporter.Outcome.Added)
         assertEquals("坏源", report.items[1].title)

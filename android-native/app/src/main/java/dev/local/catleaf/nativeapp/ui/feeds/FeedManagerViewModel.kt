@@ -7,6 +7,7 @@ import dev.local.catleaf.nativeapp.data.FeedRegistry
 import dev.local.catleaf.nativeapp.data.FeedStore
 import dev.local.catleaf.nativeapp.data.local.CatLeafDatabase
 import dev.local.catleaf.nativeapp.data.local.FeedEntity
+import dev.local.catleaf.nativeapp.data.network.describeVerifyError
 import dev.local.catleaf.nativeapp.data.network.EndpointError
 import dev.local.catleaf.nativeapp.data.network.FeedApi
 import dev.local.catleaf.nativeapp.data.network.FeedApiError

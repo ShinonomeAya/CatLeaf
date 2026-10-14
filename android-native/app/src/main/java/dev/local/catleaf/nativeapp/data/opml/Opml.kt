@@ -3,6 +3,8 @@ package dev.local.catleaf.nativeapp.data.opml
 import android.util.Xml
 import dev.local.catleaf.nativeapp.data.network.EndpointPolicy
 import org.xmlpull.v1.XmlPullParser
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 
@@ -18,7 +20,8 @@ import java.nio.charset.StandardCharsets
 object Opml {
 
     const val MAX_BYTES = 2 * 1024 * 1024
-    const val MAX_ENTRIES = 200
+    const val MAX_ENTRIES = 2000
+    const val MAX_BATCH_ENTRIES = 200
     const val MAX_GROUP_LENGTH = 80
     const val MAX_NAME_LENGTH = 120
     const val MAX_URL_LENGTH = 4096
@@ -48,9 +51,45 @@ object Opml {
         class TooLarge(bytes: Int) :
             OpmlError("文件超过 ${MAX_BYTES / 1024 / 1024} MiB（实际 $bytes 字节）")
         class DoctypeForbidden : OpmlError("文件包含 DOCTYPE 或实体声明，已拒绝解析")
-        class NotUtf8 : OpmlError("文件不是有效的 UTF-8 文本")
+        class NotUtf8 : OpmlError("文件编码无效，仅支持 UTF-8 或明确字节序的 UTF-16")
         class Malformed(detail: String) : OpmlError("XML 解析失败：$detail")
         class TooManyEntries(count: Int) : OpmlError("订阅条目超过上限 $MAX_ENTRIES（实际 $count）")
+    }
+
+    /** 不信任文件提供者的长度；最多读取预算加一字节即停止。 */
+    fun readBytes(input: InputStream): ByteArray {
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (true) {
+            val count = input.read(buffer, 0, minOf(buffer.size, MAX_BYTES + 1 - out.size()))
+            if (count < 0) return out.toByteArray()
+            if (count == 0) continue
+            if (out.size() + count > MAX_BYTES) throw OpmlError.TooLarge(out.size() + count)
+            out.write(buffer, 0, count)
+        }
+    }
+
+    private fun decode(bytes: ByteArray): String {
+        fun starts(vararg prefix: Int) = bytes.size >= prefix.size &&
+            prefix.indices.all { (bytes[it].toInt() and 255) == prefix[it] }
+        val (charset, offset) = when {
+            starts(0xef, 0xbb, 0xbf) -> StandardCharsets.UTF_8 to 3
+            starts(0xff, 0xfe) -> StandardCharsets.UTF_16LE to 2
+            starts(0xfe, 0xff) -> StandardCharsets.UTF_16BE to 2
+            starts(0x3c, 0, 0x3f, 0) -> StandardCharsets.UTF_16LE to 0
+            starts(0, 0x3c, 0, 0x3f) -> StandardCharsets.UTF_16BE to 0
+            else -> StandardCharsets.UTF_8 to 0
+        }
+        val text = charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(java.nio.ByteBuffer.wrap(bytes, offset, bytes.size - offset)).toString()
+        val declared = Regex("^<\\?xml\\s+[^?]*encoding\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
+            .find(text)?.groupValues?.get(1)?.uppercase()
+        val allowed = if (charset == StandardCharsets.UTF_8) setOf("UTF-8")
+            else setOf("UTF-16", charset.name().uppercase())
+        if (declared != null && declared !in allowed) throw OpmlError.NotUtf8()
+        if (charset != StandardCharsets.UTF_8 && offset == 0 && declared == null) throw OpmlError.NotUtf8()
+        return text
     }
 
     /**
@@ -62,19 +101,13 @@ object Opml {
         if (bytes.size > MAX_BYTES) return Result.failure(OpmlError.TooLarge(bytes.size))
 
         val text = try {
-            // 契约要求 UTF-8：非法字节直接判失败，不用替换字符蒙混过去
-            StandardCharsets.UTF_8.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(java.nio.ByteBuffer.wrap(bytes))
-                .toString()
+            decode(bytes)
         } catch (e: Exception) {
             return Result.failure(OpmlError.NotUtf8())
         }
 
         // 先做文本级检查：实体声明可能引出外部实体，解析前就拒绝最稳妥
-        val head = text.take(4096).uppercase()
-        if (head.contains("<!DOCTYPE") || head.contains("<!ENTITY")) {
+        if (text.contains("<!DOCTYPE", ignoreCase = true) || text.contains("<!ENTITY", ignoreCase = true)) {
             return Result.failure(OpmlError.DoctypeForbidden())
         }
 
@@ -96,18 +129,38 @@ object Opml {
             // 分组节点是否出现过子节点：没有子节点且没有 xmlUrl 的 outline，
             // 按原型 10 应作为“地址缺失、无法导入”的条目列出，而不是当成空分组悄悄丢掉。
             val groupHasChild = mutableListOf<Boolean>()
+            var rootSeen = false
+            var bodySeen = false
+            var inBody = false
+            var inHead = false
+
+            fun append(entry: Entry) {
+                if (entries.size == MAX_ENTRIES) throw OpmlError.TooManyEntries(entries.size + 1)
+                entries += entry
+            }
 
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
                 when (event) {
                     XmlPullParser.START_TAG -> {
                         val tag = parser.name?.lowercase()
-                        if (tag == "title" && docTitle.isEmpty()) {
+                        if (parser.depth == 1) {
+                            if (rootSeen || tag != "opml") throw OpmlError.Malformed("文件不是 OPML")
+                            rootSeen = true
+                        }
+                        if (parser.depth == 2 && tag == "head") inHead = true
+                        if (parser.depth == 2 && tag == "body") {
+                            if (bodySeen) throw OpmlError.Malformed("重复的 body")
+                            bodySeen = true
+                            inBody = true
+                        }
+                        if (tag == "title" && inHead && parser.depth == 3 && docTitle.isEmpty()) {
                             docTitle = parser.nextText().trim()
                             event = parser.eventType
                             continue
                         }
                         if (tag == "outline") {
+                            if (!inBody || outlineStack.size >= 64) throw OpmlError.Malformed("outline 结构或层级无效")
                             val label = attr(parser, "title") ?: attr(parser, "text") ?: ""
                             val xmlUrl = attr(parser, "xmlurl")
                             // 任何子节点出现时，把当前最近的分组标记为“有子节点”
@@ -119,28 +172,31 @@ object Opml {
                                 outlineStack += null
                                 groupHasChild += true
                                 val groupPath = outlineStack.filterNotNull()
-                                entries += buildEntry(label, xmlUrl, attr(parser, "htmlurl"), groupPath)
+                                append(buildEntry(label, xmlUrl, attr(parser, "htmlurl"), groupPath, attr(parser, "type")))
                             }
                         }
                     }
                     XmlPullParser.END_TAG -> {
+                        if (parser.depth == 2 && parser.name.equals("body", ignoreCase = true)) inBody = false
+                        if (parser.depth == 2 && parser.name.equals("head", ignoreCase = true)) inHead = false
                         if (parser.name?.lowercase() == "outline" && outlineStack.isNotEmpty()) {
                             val label = outlineStack.removeAt(outlineStack.lastIndex)
                             val hadChild = groupHasChild.removeAt(groupHasChild.lastIndex)
                             // 无子节点、无 xmlUrl 但有名字 → 视为“地址缺失”的无效条目
                             if (label != null && !hadChild && label.isNotBlank()) {
-                                entries += Opml.Entry(
+                                append(Entry(
                                     title = label,
                                     xmlUrl = "",
                                     group = outlineStack.filterNotNull().joinToString(" / "),
                                     invalidReason = "地址缺失，无法导入",
-                                )
+                                ))
                             }
                         }
                     }
                 }
                 event = parser.next()
             }
+            if (!rootSeen || !bodySeen) throw OpmlError.Malformed("缺少 OPML body")
         } catch (e: OpmlError) {
             return Result.failure(e)
         } catch (e: Exception) {
@@ -176,10 +232,11 @@ object Opml {
         )
     }
 
-    private fun buildEntry(title: String, xmlUrl: String, htmlUrl: String?, groupPath: List<String>): Entry {
+    private fun buildEntry(title: String, xmlUrl: String, htmlUrl: String?, groupPath: List<String>, type: String?): Entry {
         val group = groupPath.filter { it.isNotBlank() }.joinToString(" / ")
         val normalized = EndpointPolicy.normalizeFeedUrl(xmlUrl)
         val reason = when {
+            !type.isNullOrBlank() && type.lowercase() !in setOf("rss", "atom") -> "该条目使用其他抓取配置，仅支持 RSS/Atom"
             xmlUrl.length > MAX_URL_LENGTH -> "地址过长"
             normalized == null -> "不是有效的 HTTPS 地址"
             // 与本机/实例新增同一条目标规则（契约：拒绝 localhost、私有/回环地址）：写入前就标出，不等导入时才失败
