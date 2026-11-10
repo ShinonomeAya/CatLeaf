@@ -114,7 +114,7 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
             localFetcher ?: dev.local.catleaf.nativeapp.data.rss.LocalFeedFetcher().also { localFetcher = it }
         } else null
         val localXml: (suspend (FeedEntity) -> Result<String>)? =
-            fetcherForScope?.let { f -> { feed: FeedEntity -> f.fetchXml(feed.url) } }
+            fetcherForScope?.let { f -> { feed: FeedEntity -> f.fetchSource(feed) } }
         return ArticleRepository(
             db = db,
             api = api,

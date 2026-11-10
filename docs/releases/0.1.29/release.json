@@ -1,0 +1,51 @@
+{
+  "versionName": "0.1.29",
+  "versionCode": 30,
+  "packageName": "dev.local.catleaf.nativeapp",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "status": "candidate-not-published",
+  "validationDate": "2026-11-10",
+  "apk": {
+    "bytes": 28920154,
+    "sha256": "92ac5ba2dd9f0bed74530f7d7cbbf3343b348984c88643c69cd97ebb9fe6f304",
+    "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
+    "signatureScheme": "APK Signature Scheme v2",
+    "installedPhysicalApkSha256": "92ac5ba2dd9f0bed74530f7d7cbbf3343b348984c88643c69cd97ebb9fe6f304"
+  },
+  "validation": {
+    "unitTests": 221,
+    "unitSuites": 38,
+    "unitFailures": 0,
+    "unitErrors": 0,
+    "unitSkipped": 0,
+    "lintErrors": 0,
+    "lintWarnings": 29,
+    "lintHints": 2,
+    "targetedAndroid10Tests": 70,
+    "landscapeViewportTests": 3,
+    "visualProfiles": 8,
+    "nativeScreenshots": 48,
+    "isolatedWebView": "74.0.3729.185",
+    "deviceVersion": "Android 16 / WebView 143.0.7499.192",
+    "physicalScope": "Retained-data install, 6 subscriptions and 1 favorite, left/center/right taps, read position after force-stop, rule form entry and cancellation, preference and launcher restoration",
+    "capturedPageSamples": {
+      "ruanyifeng": 9,
+      "mdn": 71,
+      "articleBodies": 2
+    },
+    "sampleNetworkOnIsolatedAndroid10": "timeout",
+    "actualAiRequests": 0,
+    "fullG7": false,
+    "formalG8": false
+  },
+  "source": {
+    "baselineCommit": "781620798ece762ea19f30021fe72ed1cee31612",
+    "workingTreeCandidate": true
+  },
+  "pending": [
+    "Physical E-ink refresh and ghosting",
+    "TalkBack interaction with tap paging and on-device rotation transition",
+    "Complete G7/G8 and F09"
+  ]
+}

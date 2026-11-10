@@ -23,8 +23,8 @@ android {
         applicationId = "dev.local.catleaf.nativeapp"
         minSdk = 29
         targetSdk = 36
-        versionCode = 29
-        versionName = "0.1.28"
+        versionCode = 30
+        versionName = "0.1.29"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 两阶段探针（跨进程持久化）依赖人工分次运行，默认套件跳过
@@ -75,6 +75,7 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 }
 
 // Room schema 导出到版本控制；迁移测试依赖它，禁止用破坏性迁移顶替

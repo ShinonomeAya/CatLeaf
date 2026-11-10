@@ -36,6 +36,7 @@ class FullTextExtractor(
             /** 正文来源：本机直连还是后端兜底，便于验收时区分 */
             val fromBackend: Boolean,
             val thumbnail: String? = null,
+            val notice: String? = null,
         ) : Outcome()
 
         data class Failed(val reason: String) : Outcome()
@@ -46,6 +47,7 @@ class FullTextExtractor(
         fallbackTitle: String?,
         /** 当前正在显示的正文长度：用来判断提取结果是不是比原文还少 */
         currentTextLength: Int = 0,
+        rules: WebsiteRules? = null,
     ): Outcome = withContext(Dispatchers.IO) {
         // 抓取与 HTML 解析都是阻塞 I/O 与 CPU 工作：调用方可能在主线程（ViewModel），
         // 因此在这里统一切到 IO；设备实测证明放在主线程会直接抛 NetworkOnMainThreadException。
@@ -54,20 +56,30 @@ class FullTextExtractor(
             is HtmlSource.Ok -> fetched
         }
 
+        var ruleNotice: String? = null
+        if (rules != null && rules.body.isNotBlank()) {
+            val custom = runCatching { rules.extractBody(source.html, source.baseUrl) }
+            val selected = custom.getOrNull()
+            if (selected != null && (selected.textLength >= MIN_USEFUL_TEXT || selected.textLength > currentTextLength)) {
+                return@withContext Outcome.Extracted(selected.html, fallbackTitle, null, source.fromBackend, coverFromHtml(source.html, source.baseUrl))
+            }
+            ruleNotice = custom.exceptionOrNull()?.message ?: "规则提取的正文过短"
+        }
+        fun failed(reason: String) = Outcome.Failed(listOfNotNull(ruleNotice, reason).joinToString("；"))
         val article = try {
-            Readability4J(articleUrl, source.html).parse()
+            Readability4J(source.baseUrl, source.html).parse()
         } catch (e: Exception) {
             // 解析库对畸形 HTML 会抛异常：算提取失败，不能把异常抛给界面
-            return@withContext Outcome.Failed("正文解析失败：${e.message ?: e.javaClass.simpleName}")
-        } ?: return@withContext Outcome.Failed("没有从原网页中识别出正文")
+            return@withContext failed("正文解析失败：${e.message ?: e.javaClass.simpleName}")
+        } ?: return@withContext failed("没有从原网页中识别出正文")
 
-        val sanitized = ArticleSanitizer.sanitize(article.content, articleUrl, listOfNotNull(fallbackTitle, article.title))
-        if (sanitized.isEmpty) return@withContext Outcome.Failed("提取到的正文为空")
+        val sanitized = ArticleSanitizer.sanitize(article.content, source.baseUrl, listOfNotNull(fallbackTitle, article.title))
+        if (sanitized.isEmpty) return@withContext failed("提取到的正文为空")
 
         // ponytail: 固定下限 + “不比现有正文更少”的启发式，挡住把导航/提示条当正文的页面；
         // 若真遇到长期被误判的站点，再按域名放行或改成可配置阈值。
         if (sanitized.textLength < MIN_USEFUL_TEXT && sanitized.textLength <= currentTextLength) {
-            return@withContext Outcome.Failed("提取到的正文过短（${sanitized.textLength} 字）")
+            return@withContext failed("提取到的正文过短（${sanitized.textLength} 字）")
         }
 
         Outcome.Extracted(
@@ -75,12 +87,13 @@ class FullTextExtractor(
             title = article.title?.takeIf { it.isNotBlank() } ?: fallbackTitle,
             byline = article.byline?.replace(Regex("^发邮件[\\s\\u00a0]+"), "")?.trim()?.takeIf { it.isNotBlank() },
             fromBackend = source.fromBackend,
-            thumbnail = coverFromHtml(source.html, articleUrl),
+            thumbnail = coverFromHtml(source.html, source.baseUrl),
+            notice = ruleNotice?.let { "$it；已使用自动提取" },
         )
     }
 
     private sealed class HtmlSource {
-        class Ok(val html: String, val fromBackend: Boolean) : HtmlSource()
+        class Ok(val html: String, val fromBackend: Boolean, val baseUrl: String) : HtmlSource()
 
         class Failed(val reason: String) : HtmlSource()
     }
@@ -89,8 +102,9 @@ class FullTextExtractor(
         val direct = publicFetch.fetch(articleUrl, PublicFetch.MAX_BYTES)
         direct.getOrNull()?.let { fetched ->
             return HtmlSource.Ok(
-                absolutizeUrls(decodeHtml(fetched.bytes, fetched.contentType), articleUrl),
+                absolutizeUrls(decodeHtml(fetched.bytes, fetched.contentType), fetched.finalUrl ?: articleUrl),
                 fromBackend = false,
+                baseUrl = fetched.finalUrl ?: articleUrl,
             )
         }
 
@@ -98,7 +112,7 @@ class FullTextExtractor(
         val viaBackend = api?.fetchRawHtml(articleUrl)
             ?: return HtmlSource.Failed("本机抓取失败（$directReason）；可用「原网页」在浏览器打开")
         viaBackend.getOrNull()?.takeIf { it.isNotBlank() }?.let { html ->
-            return HtmlSource.Ok(absolutizeUrls(html, articleUrl), fromBackend = true)
+            return HtmlSource.Ok(absolutizeUrls(html, articleUrl), fromBackend = true, baseUrl = articleUrl)
         }
 
         val backendReason = viaBackend.exceptionOrNull()?.message ?: "后端返回空响应"

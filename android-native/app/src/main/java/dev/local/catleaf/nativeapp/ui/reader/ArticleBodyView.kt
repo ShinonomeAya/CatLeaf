@@ -362,6 +362,7 @@ fun ArticleBodyView(
     paragraphJump: ParagraphJump? = null,
     onParagraphJumped: (Long) -> Unit = {},
     onAiSelection: ((String) -> Unit)? = null,
+    tapToPage: Boolean = false,
 ) {
     val context = LocalContext.current
     val publicFetch = remember { PublicFetch() }
@@ -374,6 +375,8 @@ fun ArticleBodyView(
     val pendingRestore = remember { mutableStateOf(scrollAnchor) }
     val scrollReporter = rememberUpdatedState(onScrollPosition)
     val holder = remember { WebViewHolder() }
+    val paging = rememberUpdatedState(tapToPage)
+    val currentFont = rememberUpdatedState(fontSizeSp)
     val jump = rememberUpdatedState(paragraphJump)
     val jumpReporter = rememberUpdatedState(onParagraphJumped)
     fun applyJump() {
@@ -449,14 +452,15 @@ fun ArticleBodyView(
     AndroidView(
         modifier = modifier.fillMaxSize(),
         factory = { ctx ->
-            object : WebView(ctx) {
-                override fun startActionMode(callback: android.view.ActionMode.Callback, type: Int): android.view.ActionMode? =
-                    super.startActionMode(
-                        if (type == android.view.ActionMode.TYPE_FLOATING && callback is android.view.ActionMode.Callback2)
-                            articleSelectionActionMode(callback) else callback,
-                        type,
-                    )
-            }.also { view ->
+            TapPagingWebView(ctx).also { view ->
+                view.pagingEnabled = { paging.value && holder.loaded }
+                view.interactionKey = { holder.pageUrl }
+                view.overlapPixels = { (currentFont.value * ctx.resources.displayMetrics.density * ctx.resources.configuration.fontScale * 1.67f * 2).roundToInt() }
+                view.onPageTurn = {
+                    holder.restoreTick?.let(view::removeCallbacks)
+                    holder.restoreTick = null
+                    pendingRestore.value = null
+                }
                 configureArticleWebView(view, ctx)
                 view.webViewClient = client
                 view.loadUrl(pageUrl)

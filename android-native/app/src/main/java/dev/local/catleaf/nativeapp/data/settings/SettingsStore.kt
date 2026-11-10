@@ -48,12 +48,14 @@ class SettingsStore(private val context: Context) {
         val lastReadingScopeKey: String? = null,
         val lastReadingAllFeeds: Boolean = false,
         val lastReadingLoadedCount: Int = 200,
+        val tapToPage: Boolean = false,
     )
 
     val snapshot: Flow<Snapshot> = context.settingsDataStore.data.map { prefs ->
         Snapshot(
             themeMode = prefs[KEY_THEME]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
             bodyFontSizeSp = prefs[KEY_FONT_SIZE] ?: DEFAULT_FONT_SIZE_SP,
+            tapToPage = prefs[KEY_TAP_TO_PAGE] ?: false,
             currentInstanceKey = prefs[KEY_INSTANCE],
             lastFeedId = prefs[KEY_LAST_FEED],
             lastFilter = prefs[KEY_LAST_FILTER],
@@ -73,6 +75,8 @@ class SettingsStore(private val context: Context) {
     suspend fun current(): Snapshot = snapshot.first()
 
     suspend fun setThemeMode(mode: ThemeMode) = edit { it[KEY_THEME] = mode.name }
+
+    suspend fun setTapToPage(enabled: Boolean) = edit { it[KEY_TAP_TO_PAGE] = enabled }
 
     /** 正文可选 16/18/20/22（设计规范）；越界夹到范围，不写坏值 */
     suspend fun setBodyFontSize(sp: Int) =
@@ -140,6 +144,7 @@ class SettingsStore(private val context: Context) {
 
         private val KEY_THEME = stringPreferencesKey("theme_mode")
         private val KEY_FONT_SIZE = intPreferencesKey("body_font_size_sp")
+        private val KEY_TAP_TO_PAGE = booleanPreferencesKey("reader_tap_to_page")
         private val KEY_INSTANCE = stringPreferencesKey("current_instance_key")
         private val KEY_LAST_FEED = stringPreferencesKey("last_feed_id")
         private val KEY_READING_SCOPE = stringPreferencesKey("last_reading_scope_key")

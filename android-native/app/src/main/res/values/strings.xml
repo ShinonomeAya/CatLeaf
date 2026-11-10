@@ -637,4 +637,6 @@
     <string name="update_browser_hint">将打开系统浏览器下载。请使用同签名安装包覆盖升级，不要卸载或清除数据。</string>
     <string name="update_download">前往下载</string>
     <string name="update_acknowledge">知道了</string>
+    <string name="reading_prefs_tap_paging">点击翻页（墨水屏）</string>
+    <string name="reading_prefs_tap_paging_hint">左侧上一屏，右侧下一屏，中央保持原操作。仍可滑动阅读；默认关闭。</string>
 </resources>

@@ -50,6 +50,13 @@ data class RestorePlan(
  */
 object StateRestore {
 
+    fun localFeedsToImport(doc: StateDocument, localFeeds: List<FeedEntity>, scopeKey: String): List<FeedEntity> =
+        feedsToImport(doc, localFeeds).map { entry ->
+            val backup = doc.feeds.first { EndpointPolicy.isSameFeedUrl(it.url, entry.xmlUrl) }
+            FeedEntity(scopeKey, "f" + java.util.UUID.randomUUID().toString().replace("-", "").take(20),
+                entry.xmlUrl, entry.title, entry.group, "pending", null, backup.sourceType, backup.ruleJson)
+        }
+
     /** 备份源里"目标还没有"的：交给 [dev.local.catleaf.nativeapp.data.opml.OpmlImporter] 逐源导入 */
     fun feedsToImport(doc: StateDocument, localFeeds: List<FeedEntity>): List<Opml.Entry> =
         doc.feeds.filter { backup ->

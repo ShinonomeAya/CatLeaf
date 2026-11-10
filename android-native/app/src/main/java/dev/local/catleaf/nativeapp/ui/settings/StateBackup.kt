@@ -179,7 +179,7 @@ class StateBackupViewModel(application: Application) : AndroidViewModel(applicat
                 val localStore = dev.local.catleaf.nativeapp.data.LocalFeedStore(
                     db, scope.key, dev.local.catleaf.nativeapp.data.local.CacheCleanup(db, getApplication()),
                 )
-                feeds = localStore.local().map { StateFeed(it.url, it.title, it.category) }
+                feeds = localStore.local().map { StateFeed(it.url, it.title, it.category, it.sourceType, it.ruleJson) }
                 articlesForExport = db.articles().listByInstance(scope.key)
                 exportKind = "local"
                 exportOrigin = null
@@ -344,14 +344,7 @@ class StateBackupViewModel(application: Application) : AndroidViewModel(applicat
         _state.value = _state.value.copy(phase = RestorePhase.Running("正在写入本机…"))
         val outcome = runCatching {
             val existingFeeds = db.feeds().list(scopeKey)
-            val feedsToWrite = StateRestore.feedsToImport(doc, existingFeeds).map { f ->
-                FeedEntity(
-                    instanceKey = scopeKey,
-                    feedId = "f" + (java.util.UUID.randomUUID().toString().replace("-", "").take(20)),
-                    url = f.xmlUrl, title = f.title, category = f.group,
-                    status = "pending", lastSuccessAt = null,
-                )
-            }
+            val feedsToWrite = StateRestore.localFeedsToImport(doc, existingFeeds, scopeKey)
             check(feedsToWrite.isEmpty() || existingFeeds.size + feedsToWrite.size <= LocalFeedStore.MAX_FEEDS) {
                 "本机订阅超过 ${LocalFeedStore.MAX_FEEDS} 个上限，请先删除一些"
             }
@@ -424,6 +417,10 @@ class StateBackupViewModel(application: Application) : AndroidViewModel(applicat
             }
             if (scope.kind == dev.local.catleaf.nativeapp.data.settings.ScopeKind.LOCAL) {
                 restoreIntoLocal(preview, doc, scope.key)
+                return@launch
+            }
+            if (doc.feeds.any { it.sourceType != "rss" || it.ruleJson != null }) {
+                _state.value = _state.value.copy(notice = "此备份含网页源或本机抓取规则，请切换到本机使用后恢复；本次未向实例写入")
                 return@launch
             }
             val d = deps() ?: run {

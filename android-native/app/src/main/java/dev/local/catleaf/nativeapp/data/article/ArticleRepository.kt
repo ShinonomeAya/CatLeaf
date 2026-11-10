@@ -1,11 +1,14 @@
 package dev.local.catleaf.nativeapp.data.article
 
+import androidx.room.withTransaction
+
 import dev.local.catleaf.nativeapp.data.local.CatLeafDatabase
 import dev.local.catleaf.nativeapp.data.local.FeedEntity
 import dev.local.catleaf.nativeapp.data.network.EndpointError
 import dev.local.catleaf.nativeapp.data.network.FeedApi
 import dev.local.catleaf.nativeapp.data.network.PublicFetch
 import dev.local.catleaf.nativeapp.data.rss.FeedParser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -70,7 +73,12 @@ class ArticleRepository(
 
     // 每个源一把锁 + 最近一次成功刷新的时间：并发调用第二个会等第一个，然后按 15 分钟规则跳过
     private val locks = mutableMapOf<String, Mutex>()
-    private val lastSuccess = mutableMapOf<String, Long>()
+    private data class RefreshSuccess(val at: Long, val url: String, val sourceType: String, val ruleJson: String?)
+    private val lastSuccess = mutableMapOf<String, RefreshSuccess>()
+
+    private fun successAt(feed: FeedEntity): Long? = lastSuccess[feed.feedId]?.takeIf {
+        it.url == feed.url && it.sourceType == feed.sourceType && it.ruleJson == feed.ruleJson
+    }?.at
 
     private fun lockFor(feedId: String): Mutex = synchronized(locks) {
         locks.getOrPut(feedId) { Mutex() }
@@ -101,8 +109,8 @@ class ArticleRepository(
     }
 
     /** 是否到了该自动刷新的时间（前台按需刷新，不是后台轮询） */
-    suspend fun isStale(feedId: String): Boolean {
-        val last = lastSuccess[feedId] ?: return true
+    suspend fun isStale(feed: FeedEntity): Boolean {
+        val last = successAt(feed) ?: return true
         return now() - last >= REFRESH_INTERVAL_MS
     }
 
@@ -113,13 +121,13 @@ class ArticleRepository(
     suspend fun refreshIfStale(feed: FeedEntity, force: Boolean = false): RefreshOutcome {
         val requestedAt = now()
         return lockFor(feed.feedId).withLock {
-            if (!force && !isStale(feed.feedId)) {
+            if (!force && !isStale(feed)) {
                 return@withLock RefreshOutcome.SkippedFresh
             }
             // 等锁期间如果别人已经刷完（成功时间不早于本次请求发起），直接复用它的结果。
             // 只看 force 会让两个同时到达的手动刷新各抓一次——手动刷新只该免掉 15 分钟间隔，
             // 不该免掉同源并发去重（契约 P02：同源并发刷新去重）。
-            if ((lastSuccess[feed.feedId] ?: 0L) >= requestedAt) {
+            if ((successAt(feed) ?: 0L) >= requestedAt) {
                 return@withLock RefreshOutcome.SkippedFresh
             }
             doRefresh(feed)
@@ -146,30 +154,36 @@ class ArticleRepository(
         }
         val feedApi = api // 供历史写入（本机范围 localFeedXml != null 且 api 可能非空——按范围判定不发）
 
-        val parsed = FeedParser.parse(xml, feed.url).getOrElse { error ->
+        val parsed = (if (feed.sourceType == "html") runCatching {
+            require(localFeedXml != null) { "网页订阅目前仅支持本机使用" }
+            WebsiteRules.fromJson(requireNotNull(feed.ruleJson) { "网页订阅缺少抓取规则" }).extractList(xml, feed.url)
+        } else FeedParser.parse(xml, feed.url)).getOrElse { error ->
             return RefreshOutcome.Failed(error)
         }
 
-        val result = ArticleMerger(db.articles()).mergeRefresh(
-            instanceKey = instanceKey,
-            feedId = feed.feedId,
-            feedTitle = parsed.title.ifBlank { feed.title },
-            feedUrl = feed.url,
-            items = parsed.items.map {
-                ArticleMerger.NewArticle(
-                    title = it.title,
-                    guid = it.guid,
-                    link = it.link,
-                    publishedAt = it.publishedAt,
-                    content = it.content,
-                    description = it.description,
-                    thumbnail = it.thumbnail,
-                )
-            },
-        )
+        val result = try {
+            db.withTransaction {
+                val current = db.feeds().get(instanceKey, feed.feedId)
+                check(current == null || (current.url == feed.url && current.sourceType == feed.sourceType && current.ruleJson == feed.ruleJson)) {
+                    "抓取规则已变更，本次结果未保存，请重新刷新"
+                }
+                ArticleMerger(db.articles()).mergeRefresh(
+                    instanceKey = instanceKey,
+                    feedId = feed.feedId,
+                    feedTitle = parsed.title.ifBlank { feed.title },
+                    feedUrl = feed.url,
+                    items = parsed.items.map {
+                        ArticleMerger.NewArticle(it.title, it.guid, it.link, it.publishedAt, it.content, it.description, it.thumbnail)
+                    },
+                ).also { updateFeedState(feed) }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            return RefreshOutcome.Failed(error)
+        }
 
-        lastSuccess[feed.feedId] = now()
-        updateFeedState(feed)
+        lastSuccess[feed.feedId] = RefreshSuccess(now(), feed.url, feed.sourceType, feed.ruleJson)
 
         // 历史尽力写入（L07/契约 8.3）：失败不影响本地阅读，但要标未同步。
         var historyNotSynced = false
@@ -188,7 +202,7 @@ class ArticleRepository(
             }
         }
 
-        return RefreshOutcome.Refreshed(result.inserted, result.skippedUnidentified, result.conflicts.size, historyNotSynced)
+        return RefreshOutcome.Refreshed(result.inserted, result.skippedUnidentified + parsed.unidentifiedCount, result.conflicts.size, historyNotSynced)
     }
 
     /**

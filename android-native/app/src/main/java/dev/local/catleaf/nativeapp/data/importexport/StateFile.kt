@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** 状态文件的一个订阅条目（契约 §6：真实 URL、名称、分组） */
-data class StateFeed(val url: String, val title: String, val category: String)
+data class StateFeed(val url: String, val title: String, val category: String, val sourceType: String = "rss", val ruleJson: String? = null)
 
 /** 一个文章的阅读状态条目——只有身份与状态；**没有正文、AI 结果或密钥**（契约 §6） */
 data class StateArticle(
@@ -34,18 +34,16 @@ data class StateDocument(
 class StateLimitExceeded(message: String) : Exception(message)
 
 /**
- * 本产品状态文件 `catweb-state` v1（契约 §6）。
+ * 本产品状态文件 `catweb-state` v3，兼容读取v1/v2（契约 §6）。
  *
- * 写侧手写 JSON（转义只有引号/反斜杠/控制字符，且**纯 Kotlin 可在 JVM 测**）；
- * 读侧用平台自带的 org.json——它只处理"别人给的字节"这一信任边界，
- * 且要求 Android 运行时（往返测试在 instrumented 侧钉住）。
+ * 普通字段沿用手写JSON转义，规则对象与读侧使用org.json；往返及迁移在隔离Android验证。
  */
 object StateFile {
 
     const val FORMAT = "catweb-state"
 
-    /** v1（实例 origin 字符串）与 v2（source 对象，契约 8.5）；读取两者兼容 */
-    const val VERSION = 2
+    /** v3增加订阅类型/规则，v1实例origin与v2来源对象兼容读取。 */
+    const val VERSION = 3
     private const val V1 = 1
 
     /** 契约 §6：最多 10 MiB、50,000 个状态条目 */
@@ -53,7 +51,7 @@ object StateFile {
     const val MAX_ENTRIES = 50_000
 
     /**
-     * v2 写侧（契约 8.5）：`source` 为 {kind:local} 或 {kind:instance, origin}；
+     * v3写侧：`source` 为 {kind:local} 或 {kind:instance, origin}；
      * 不导出内部 scope key 或设备标识；不含正文/AI/密钥。
      */
     fun write(sourceKind: String, sourceOrigin: String?, exportedAt: Long, feeds: List<StateFeed>, articles: List<StateArticle>): ByteArray {
@@ -79,9 +77,14 @@ object StateFile {
             }
             append(",\"feeds\":[")
             feeds.forEachIndexed { i, f ->
+                require(f.sourceType in listOf("rss", "html")) { "未知订阅类型" }
+                require(f.sourceType == "rss" || f.ruleJson != null) { "网页订阅缺少规则" }
+                f.ruleJson?.let { dev.local.catleaf.nativeapp.data.article.WebsiteRules.fromJson(it).requireValid(f.sourceType) }
                 if (i > 0) append(',')
                 append('{')
                 field("url", f.url); comma(); field("title", f.title); comma(); field("category", f.category)
+                comma(); field("sourceType", f.sourceType)
+                f.ruleJson?.let { comma(); append("\"rules\":").append(dev.local.catleaf.nativeapp.data.article.WebsiteRules.fromJson(it).toJson()) }
                 append('}')
             }
             append("],\"articles\":[")
@@ -141,8 +144,8 @@ object StateFile {
         }
         if (root.optString("format") != FORMAT) throw IllegalArgumentException("不是 CatLeaf 状态文件（format 不符）")
         val version = root.optInt("version", -1)
-        if (version != VERSION && version != V1) {
-            throw IllegalArgumentException("无法读取的状态文件版本：${root.opt("version")}（本版支持 v$V1–v$VERSION；v2 文件需支持 v2 的猫页版本恢复）")
+        if (version !in V1..VERSION) {
+            throw IllegalArgumentException("无法读取的状态文件版本：${root.opt("version")}（本版支持 v$V1–v$VERSION）")
         }
 
         // 来源：v2 用 source 对象并校验 kind/origin 对应；v1 的 sourceOrigin 一律按实例来源解析（不当作本机）
@@ -193,7 +196,17 @@ object StateFile {
                 invalid += "订阅「${obj.optString("title").take(40)}」：地址不是有效的 HTTPS 订阅"
                 continue
             }
-            feeds += StateFeed(url, obj.optString("title"), obj.optString("category"))
+            val config = runCatching {
+                val type = if (version >= 3) obj.optString("sourceType", "rss") else "rss"
+                require(type in listOf("rss", "html")) { "未知订阅类型" }
+                val rules = if (version >= 3 && obj.has("rules")) {
+                    val json = obj.optJSONObject("rules") ?: throw IllegalArgumentException("规则必须为对象")
+                    dev.local.catleaf.nativeapp.data.article.WebsiteRules.fromJson(json.toString()).also { it.requireValid(type) }.toJson()
+                } else null
+                require(type == "rss" || rules != null) { "网页订阅缺少规则" }
+                StateFeed(url, obj.optString("title"), obj.optString("category"), type, rules)
+            }
+            config.onSuccess { feeds += it }.onFailure { invalid += "订阅条目 $i：${it.message ?: "抓取配置无效"}" }
         }
 
         val articles = mutableListOf<StateArticle>()

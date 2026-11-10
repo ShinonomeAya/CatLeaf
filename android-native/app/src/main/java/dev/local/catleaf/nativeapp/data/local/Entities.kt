@@ -36,6 +36,9 @@ data class FeedEntity(
     /** pending / ok / failed：新增后验证状态，失败源仍可见可删 */
     val status: String,
     val lastSuccessAt: Long?,
+    @androidx.room.ColumnInfo(defaultValue = "'rss'")
+    val sourceType: String = "rss",
+    val ruleJson: String? = null,
 )
 
 /**

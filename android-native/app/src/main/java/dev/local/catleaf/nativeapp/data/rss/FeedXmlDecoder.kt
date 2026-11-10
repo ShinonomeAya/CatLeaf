@@ -80,6 +80,22 @@ object FeedXmlDecoder {
  */
 class LocalFeedFetcher(private val fetcher: PublicFetch = PublicFetch(HttpClients.forPublicFeed())) {
 
+    suspend fun fetchSource(feed: dev.local.catleaf.nativeapp.data.local.FeedEntity): Result<String> {
+        if (feed.sourceType == "rss") return fetchXml(feed.url)
+        if (feed.sourceType != "html") return Result.failure(IllegalArgumentException("未知订阅类型"))
+        return withContext(Dispatchers.IO) {
+            fetcher.fetch(feed.url).mapCatching { fetched ->
+                val base = fetched.finalUrl ?: feed.url
+                val html = dev.local.catleaf.nativeapp.data.article.FullTextExtractor.decodeHtml(fetched.bytes, fetched.contentType)
+                val doc = dev.local.catleaf.nativeapp.data.article.WebsiteRules.parseDocument(html, base)
+                for (attribute in listOf("href", "src")) doc.select("[$attribute]").forEach { node ->
+                    node.absUrl(attribute).takeIf { it.isNotEmpty() }?.let { node.attr(attribute, it) }
+                }
+                doc.outerHtml()
+            }
+        }
+    }
+
     suspend fun fetchXml(url: String): Result<String> = withContext(Dispatchers.IO) {
         fetcher.fetch(url).fold(
             onSuccess = { FeedXmlDecoder.decode(it.bytes, it.contentType) },

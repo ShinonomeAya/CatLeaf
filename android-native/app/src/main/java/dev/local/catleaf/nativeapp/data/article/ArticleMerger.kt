@@ -95,7 +95,17 @@ class ArticleMerger(private val dao: ArticleDao) {
 
             // 有正文写正文；只有摘要也要写这一行——否则摘要不会被保存，
             // 详情页会显示成“完全没有内容”，而不是“摘要 + 获取全文”（契约 P04）
-            val content = if (item.content != null || item.description != null) {
+            val savedBody = if (item.content == null && item.description != null && existing != null) {
+                dao.getContent(localId)?.takeIf { !it.content.isNullOrBlank() }
+            } else null
+            val content = if (savedBody != null) {
+                savedBody.copy(
+                    summary = item.description,
+                    thumbnail = item.thumbnail ?: savedBody.thumbnail,
+                    searchText = ArticleFilter.summaryPreview(item.description, limit = 500),
+                    lastAccessedAt = now,
+                )
+            } else if (item.content != null || item.description != null) {
                 ArticleContentEntity(
                     localId = localId,
                     content = item.content,

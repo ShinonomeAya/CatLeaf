@@ -25,17 +25,17 @@ import dev.local.catleaf.nativeapp.data.ai.BilingualArticle
 import java.util.UUID
 
 /** Chromium's primary assist icon can override RemoteAction.shouldShowIcon. */
-internal fun articleSelectionActionMode(callback: ActionMode.Callback) = object : ActionMode.Callback2() {
+internal fun articleSelectionActionMode(callback: ActionMode.Callback, onSelectionActive: (Boolean) -> Unit = {}) = object : ActionMode.Callback2() {
     private fun showAiLabel(menu: Menu) {
         for (index in 0 until menu.size()) {
             val item = menu.getItem(index)
             if (item.itemId == android.R.id.textAssist && item.title?.toString() == AI_READING_TITLE) item.icon = null
         }
     }
-    override fun onCreateActionMode(mode: ActionMode, menu: Menu) = callback.onCreateActionMode(mode, menu).also { showAiLabel(menu) }
+    override fun onCreateActionMode(mode: ActionMode, menu: Menu) = callback.onCreateActionMode(mode, menu).also { onSelectionActive(it); showAiLabel(menu) }
     override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = callback.onPrepareActionMode(mode, menu).also { showAiLabel(menu) }
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem) = callback.onActionItemClicked(mode, item)
-    override fun onDestroyActionMode(mode: ActionMode) = callback.onDestroyActionMode(mode)
+    override fun onDestroyActionMode(mode: ActionMode) { try { callback.onDestroyActionMode(mode) } finally { onSelectionActive(false) } }
     override fun onGetContentRect(mode: ActionMode, view: View, outRect: Rect) {
         if (callback is ActionMode.Callback2) callback.onGetContentRect(mode, view, outRect) else super.onGetContentRect(mode, view, outRect)
     }

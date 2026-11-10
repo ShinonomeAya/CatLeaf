@@ -1,5 +1,7 @@
 package dev.local.catleaf.nativeapp.ui.settings
 
+import androidx.compose.foundation.selection.toggleable
+
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -76,6 +78,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _bodyFontSize = MutableStateFlow(SettingsStore.DEFAULT_FONT_SIZE_SP)
     val bodyFontSize: StateFlow<Int> = _bodyFontSize.asStateFlow()
+    private val _tapToPage = MutableStateFlow(false)
+    val tapToPage: StateFlow<Boolean> = _tapToPage.asStateFlow()
 
     /** 当前实例 origin 展示（不含密钥——P07 明确不显示完整已存密钥，这里连一段都不显示） */
     private val _currentOrigin = MutableStateFlow<String?>(null)
@@ -107,6 +111,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 // 这里回流的是同一个值，不会闪回旧档
                 _themeMode.value = snap.themeMode
                 _bodyFontSize.value = snap.bodyFontSizeSp
+                _tapToPage.value = snap.tapToPage
                 // 仅实例范围生效时显示 origin；本机范围下保留的实例指针不算「当前使用」
                 val kind = ActivityScopeRules.decideKind(snap.activeScopeKind, snap.currentInstanceKey)
                 _currentOrigin.value = if (snap.currentInstanceKey == null || kind != SCOPE_KIND_INSTANCE) {
@@ -143,6 +148,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun setTapToPage(enabled: Boolean) {
+        val previous = _tapToPage.value
+        if (previous == enabled) return
+        viewModelScope.launch {
+            _saveStatus.value = saveWithRollback(previous, enabled, { _tapToPage.value = it }) { settings.setTapToPage(it) }
+        }
+    }
+
     /**
      * 重置此设备数据（P07 重置分组）：删全部本机实例、密钥、订阅镜像、文章与缓存；
      * **不碰云端订阅**（这里没有任何网络调用）。二次确认在界面上完成。
@@ -156,6 +169,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             CatLeafDatabase.resetForDeviceReset(app)
             _themeMode.value = SettingsStore.ThemeMode.SYSTEM
             _bodyFontSize.value = SettingsStore.DEFAULT_FONT_SIZE_SP
+            _tapToPage.value = false
             _currentOrigin.value = null
             _resetTick.value = _resetTick.value + 1
         }
@@ -375,6 +389,7 @@ fun ReadingPreferencesScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val fontSize by viewModel.bodyFontSize.collectAsStateWithLifecycle()
+    val tapToPage by viewModel.tapToPage.collectAsStateWithLifecycle()
     val saveStatus by viewModel.saveStatus.collectAsStateWithLifecycle()
     BackHandlerLike(onBack)
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { viewModel.clearSaveStatus() } }
@@ -423,6 +438,19 @@ fun ReadingPreferencesScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        Spacer(Modifier.size(24.dp))
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                .toggleable(tapToPage, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = viewModel::setTapToPage)
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                Text(stringResource(R.string.reading_prefs_tap_paging), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.reading_prefs_tap_paging_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            androidx.compose.material3.Switch(checked = tapToPage, onCheckedChange = null)
+        }
         Spacer(Modifier.size(24.dp))
         SectionLabel(stringResource(R.string.reading_prefs_preview_label))
         // 即时样张：排版说明文字（不是示例文章），按当前正文字号与 30/18 行高比例渲染

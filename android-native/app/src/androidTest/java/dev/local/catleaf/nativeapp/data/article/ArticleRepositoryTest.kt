@@ -281,18 +281,18 @@ class ArticleRepositoryTest {
         var clock = 1_000_000L
         val repository = repo(now = { clock })
 
-        assertTrue("首次应视为过期", repository.isStale(feed.feedId))
+        assertTrue("首次应视为过期", repository.isStale(feed))
         repository.refreshIfStale(feed)
 
         clock += ArticleRepository.REFRESH_INTERVAL_MS - 1
-        assertFalse("15 分钟内不再自动刷新", repository.isStale(feed.feedId))
+        assertFalse("15 分钟内不再自动刷新", repository.isStale(feed))
         assertTrue(
             "按需刷新应跳过",
             repository.refreshIfStale(feed) is ArticleRepository.RefreshOutcome.SkippedFresh,
         )
 
         clock += 2
-        assertTrue("超过 15 分钟应再次视为过期", repository.isStale(feed.feedId))
+        assertTrue("超过 15 分钟应再次视为过期", repository.isStale(feed))
 
         val feedRequests = generateSequence { server.takeRequest(200, java.util.concurrent.TimeUnit.MILLISECONDS) }
             .count { it.path.orEmpty().startsWith("/api/feed?") }

@@ -73,6 +73,7 @@ data class ReaderUiState(
     val bodyHash: String = "",
     /** 正文字号 16/18/20/22（P07 阅读分组）：随设置即时变化 */
     val bodyFontSizeSp: Int = 18,
+    val tapToPage: Boolean = false,
     /** 上次的正文阅读位置；只在属于当前文章时给出，由 WebView 在布局就绪后按内容高度换算 */
     val scrollAnchor: ScrollAnchor.ReaderAnchor? = null,
     /** 网络可用性（T22 V02）：离线时禁用需要网络的新操作并说明原因；已存正文/缓存译文照常可读 */
@@ -172,8 +173,9 @@ class ReaderViewModel @JvmOverloads constructor(
     init {
         // 字号设置即时生效（P07）：开页/读文章都不用重进
         viewModelScope.launch {
-            settings.snapshot.map { it.bodyFontSizeSp }
-                .collect { size -> _state.value = _state.value.copy(bodyFontSizeSp = size) }
+            settings.snapshot.collect { prefs ->
+                _state.value = _state.value.copy(bodyFontSizeSp = prefs.bodyFontSizeSp, tapToPage = prefs.tapToPage)
+            }
         }
         // 离线状态（T22 V02）：断网/回网即时反映到界面，动作在 VM 侧同样拦（根因防线）
         val monitor = NetworkMonitor(getApplication())
@@ -254,6 +256,7 @@ class ReaderViewModel @JvmOverloads constructor(
         currentTextLength = 0
         _state.value = ReaderUiState(
             bodyFontSizeSp = _state.value.bodyFontSizeSp,
+            tapToPage = _state.value.tapToPage,
             isOnline = _state.value.isOnline,
         )
         // 「避开当前正文」（契约 4.3）：淘汰/清缓存都不得删正在读的这篇
@@ -322,6 +325,7 @@ class ReaderViewModel @JvmOverloads constructor(
             _state.value = ReaderUiState(
                 loading = false,
                 bodyFontSizeSp = _state.value.bodyFontSizeSp,
+                tapToPage = _state.value.tapToPage,
                 translation = cached?.text,
                 translationSegments = cached?.segments,
                 translationCached = cached != null,
@@ -820,7 +824,20 @@ class ReaderViewModel @JvmOverloads constructor(
                 return@launch
             }
 
-            val outcome = extractor.extract(link, snapshot.title, textLength)
+            val rules = try {
+                val article = db.articles().get(targetId)?.takeIf { it.instanceKey == scope }
+                val feed = article?.let { row -> db.feeds().list(scope).firstOrNull { it.feedId == row.feedId } }
+                if (scope == dev.local.catleaf.nativeapp.data.settings.LOCAL_SCOPE_KEY) {
+                    feed?.ruleJson?.let { raw -> dev.local.catleaf.nativeapp.data.article.WebsiteRules.fromJson(raw).also { it.requireValid(feed.sourceType) } }
+                } else null
+            } catch (_: Exception) {
+                if (isCurrent(targetId, scope, revision)) updateIfCurrent(targetId) {
+                    it.copy(extracting = false, notice = "抓取规则无效或读取失败，已保留原正文；请在订阅编辑中检查规则")
+                }
+                return@launch
+            }
+            if (!isCurrent(targetId, scope, revision)) return@launch
+            val outcome = extractor.extract(link, snapshot.title, textLength, rules)
             if (!isCurrent(targetId, scope, revision)) return@launch
             when (outcome) {
                 is FullTextExtractor.Outcome.Extracted -> {
@@ -854,7 +871,7 @@ class ReaderViewModel @JvmOverloads constructor(
                     updateIfCurrent(targetId) {
                         it.copy(
                             extracting = false,
-                            notice = null,
+                            notice = outcome.notice,
                             bodyHtml = sanitized.html,
                             bookmarkOnly = false,
                             bodyPreview = sanitized.plainText.take(120),

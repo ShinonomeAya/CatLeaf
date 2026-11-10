@@ -172,7 +172,7 @@ class LocalDatabaseTest {
         legacy.close()
 
         val migrated = Room.databaseBuilder(context, CatLeafDatabase::class.java, dbName)
-            .addMigrations(CatLeafDatabase.MIGRATION_1_2, CatLeafDatabase.MIGRATION_2_3, CatLeafDatabase.MIGRATION_3_4)
+            .addMigrations(CatLeafDatabase.MIGRATION_1_2, CatLeafDatabase.MIGRATION_2_3, CatLeafDatabase.MIGRATION_3_4, CatLeafDatabase.MIGRATION_4_5)
             .build()
         try {
             org.junit.Assert.assertEquals("身份与状态行保留", 1, migrated.articles().listByInstance("inst-a").size)
@@ -199,7 +199,7 @@ class LocalDatabaseTest {
         old.version = 2
         old.close()
         val upgraded = Room.databaseBuilder(context, CatLeafDatabase::class.java, dbName)
-            .addMigrations(CatLeafDatabase.MIGRATION_2_3, CatLeafDatabase.MIGRATION_3_4).build()
+            .addMigrations(CatLeafDatabase.MIGRATION_2_3, CatLeafDatabase.MIGRATION_3_4, CatLeafDatabase.MIGRATION_4_5).build()
         try {
             val row = upgraded.articles().get("a1")!!
             assertTrue(row.isRead && row.isStarred)

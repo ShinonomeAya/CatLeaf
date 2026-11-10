@@ -1,5 +1,7 @@
 package dev.local.catleaf.nativeapp.data
 
+import androidx.room.withTransaction
+
 import dev.local.catleaf.nativeapp.data.article.ArticleRepository
 import dev.local.catleaf.nativeapp.data.local.CacheCleanup
 import dev.local.catleaf.nativeapp.data.local.CatLeafDatabase
@@ -30,6 +32,11 @@ class LocalFeedStore(
      * 新增：先写 Room（登记成功），再抓取验证。登记与验证结果分开返回（契约 8.2）。
      */
     override suspend fun add(url: String, category: String, customTitle: String): Result<FeedRegistry.AddResult> {
+        return addConfigured(url, category, customTitle, "rss", null)
+    }
+
+    suspend fun addConfigured(url: String, category: String, customTitle: String, sourceType: String, ruleJson: String?): Result<FeedRegistry.AddResult> {
+        runCatching { validateConfiguration(sourceType, ruleJson) }.onFailure { return Result.failure(it) }
         val normalized = validateNewUrl(url).getOrElse { return Result.failure(it) }
         val id = "f${java.util.UUID.randomUUID().toString().replace("-", "").take(20)}"
         val row = FeedEntity(
@@ -43,6 +50,8 @@ class LocalFeedStore(
             category = category.trim(),
             status = FeedStore.STATUS_PENDING,
             lastSuccessAt = null,
+            sourceType = sourceType,
+            ruleJson = ruleJson,
         )
         try {
             db.feeds().upsertAll(listOf(row))
@@ -67,6 +76,25 @@ class LocalFeedStore(
         } catch (e: Exception) {
             Result.failure(FeedApiError.Conflict("local_write_failed", "本机保存失败：${e.message ?: "未知原因"}"))
         }
+    }
+
+    suspend fun updateConfigured(feedId: String, category: String, customTitle: String, sourceType: String, ruleJson: String?): Result<Unit> = runCatching {
+        validateConfiguration(sourceType, ruleJson)
+        db.withTransaction {
+            val current = db.feeds().get(scopeKey, feedId) ?: throw FeedApiError.NotFound
+            val changed = current.sourceType != sourceType || current.ruleJson != ruleJson
+            db.feeds().upsert(current.copy(
+                category = category.trim(), title = customTitle.trim().ifBlank { current.title }, sourceType = sourceType, ruleJson = ruleJson,
+                status = if (changed) FeedStore.STATUS_PENDING else current.status,
+                lastSuccessAt = if (changed) null else current.lastSuccessAt,
+            ))
+        }
+    }
+
+    private fun validateConfiguration(sourceType: String, ruleJson: String?) {
+        require(sourceType == "rss" || sourceType == "html") { "未知订阅类型" }
+        if (ruleJson != null) dev.local.catleaf.nativeapp.data.article.WebsiteRules.fromJson(ruleJson).requireValid(sourceType)
+        else require(sourceType == "rss") { "网页订阅需要抓取规则" }
     }
 
     /** 删除只移除本机源行；收藏与已读在 articles 表，不受影响（契约 4.3 同源语义） */
@@ -101,7 +129,12 @@ class LocalFeedStore(
             else -> {
                 // 失败要如实写状态（pending 会误导“正在验证”）；保留原因给界面
                 val error = (outcome as ArticleRepository.RefreshOutcome.Failed).error
-                db.feeds().setStatus(scopeKey, feedId, FeedStore.STATUS_FAILED, row.lastSuccessAt)
+                db.withTransaction {
+                    val current = db.feeds().get(scopeKey, feedId)
+                    if (current != null && current.url == row.url && current.sourceType == row.sourceType && current.ruleJson == row.ruleJson) {
+                        db.feeds().setStatus(scopeKey, feedId, FeedStore.STATUS_FAILED, current.lastSuccessAt)
+                    }
+                }
                 Result.failure(error)
             }
         }
@@ -114,7 +147,7 @@ class LocalFeedStore(
     private suspend fun validateNewUrl(raw: String): Result<String> {
         val trimmed = raw.trim()
         val normalized = EndpointPolicy.normalizeFeedUrl(trimmed)
-            ?: return Result.failure(FeedApiError.Invalid("invalid_url", "只接受有效的 HTTPS RSS/Atom 地址"))
+            ?: return Result.failure(FeedApiError.Invalid("invalid_url", "只接受有效的 HTTPS 订阅地址"))
         EndpointPolicy.requirePublicFetchTarget(normalized)
             .getOrElse { return Result.failure(FeedApiError.Invalid("invalid_url", it.message ?: "地址不可用")) }
         val existing = db.feeds().list(scopeKey)
@@ -135,6 +168,6 @@ class LocalFeedStore(
         private val sharedFetcher = LocalFeedFetcher()
 
         val DEFAULT_FETCH_XML: suspend (FeedEntity) -> Result<String> =
-            { row: FeedEntity -> sharedFetcher.fetchXml(row.url) }
+            { row: FeedEntity -> sharedFetcher.fetchSource(row) }
     }
 }

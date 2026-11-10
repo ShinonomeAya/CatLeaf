@@ -30,6 +30,9 @@ interface FeedDao {
     @Query("SELECT * FROM feeds WHERE instanceKey = :instanceKey ORDER BY category, title")
     suspend fun list(instanceKey: String): List<FeedEntity>
 
+    @Query("SELECT * FROM feeds WHERE instanceKey = :instanceKey AND feedId = :feedId")
+    suspend fun get(instanceKey: String, feedId: String): FeedEntity?
+
     @Query("DELETE FROM feeds WHERE instanceKey = :instanceKey AND feedId = :feedId")
     suspend fun delete(instanceKey: String, feedId: String)
 

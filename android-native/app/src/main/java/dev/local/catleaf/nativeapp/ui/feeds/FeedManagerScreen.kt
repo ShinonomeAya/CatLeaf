@@ -205,6 +205,12 @@ fun FeedManagerScreen(
             form = f,
             editingFeed = editingFeed,
             knownCategories = categories,
+            localConfiguration = state.localOnly,
+            onSourceType = viewModel::onSourceTypeChange,
+            onCustomRules = viewModel::onCustomRulesChange,
+            onRules = viewModel::onRulesChange,
+            onPreviewUrl = viewModel::onPreviewUrlChange,
+            onPreview = viewModel::previewRules,
             onUrl = viewModel::onUrlChange,
             onTitle = viewModel::onTitleChange,
             onCategory = viewModel::onCategoryChange,
@@ -394,10 +400,10 @@ fun FeedManagerScreen(
                     MigrationRow(
                         iconRes = R.drawable.ic_upload,
                         title = stringResource(R.string.opml_export),
-                        hint = stringResource(R.string.opml_export_hint),
+                        hint = stringResource(R.string.opml_export_hint) + "；网页源 ${state.feeds.count { it.sourceType != "rss" }} 个不导出，规则请用状态备份",
                     ) {
                         val intent = opmlViewModel.buildExportIntent(
-                            state.feeds.map {
+                            state.feeds.filter { it.sourceType == "rss" }.map {
                                 Opml.ExportFeed(title = it.title, xmlUrl = it.url, group = it.category)
                             },
                         )
@@ -406,7 +412,7 @@ fun FeedManagerScreen(
                 }
                 item(key = "opml-privacy") {
                     Text(
-                        stringResource(R.string.opml_export_privacy),
+                        stringResource(R.string.opml_export_privacy) + "\nOPML不包含自定义抓取规则。网页源及规则可在设置→存储与备份中导出；恢复到本机时，新订阅会带入规则，已有订阅保留本机配置。",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -620,10 +626,16 @@ private fun formatTimestamp(millis: Long): String {
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun FeedFormSurface(
+internal fun FeedFormSurface(
     form: FeedFormState,
     editingFeed: FeedEntity?,
     knownCategories: List<String>,
+    localConfiguration: Boolean,
+    onSourceType: (String) -> Unit,
+    onCustomRules: (Boolean) -> Unit,
+    onRules: (dev.local.catleaf.nativeapp.data.article.WebsiteRules) -> Unit,
+    onPreviewUrl: (String) -> Unit,
+    onPreview: (Boolean) -> Unit,
     onUrl: (String) -> Unit,
     onTitle: (String) -> Unit,
     onCategory: (String) -> Unit,
@@ -651,18 +663,21 @@ private fun FeedFormSurface(
         }
         // 引导说明（V05：原型 09 的页级引导层级）
         Text(
-            stringResource(if (form.editing) R.string.feed_edit_lead else R.string.feed_add_lead),
+            if (form.editing && localConfiguration) "可修改名称、分组与抓取规则；地址不可修改。旧文章和离线包保留。"
+            else stringResource(if (form.editing) R.string.feed_edit_lead else R.string.feed_add_lead),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        if (localConfiguration) WebsiteSourceChoice(form, onSourceType)
         // UIR12：标签固定在框上方，框内只放示例；编辑时地址只读并用锁标出原因（原型 22）
         LabeledField(
-            label = stringResource(R.string.feed_url_label),
+            label = if (form.sourceType == "html") "网页列表地址" else stringResource(R.string.feed_url_label),
             value = form.url,
             onValueChange = onUrl,
-            placeholder = stringResource(R.string.feed_url_placeholder),
-            supporting = stringResource(if (form.editing) R.string.feed_url_readonly_hint else R.string.feed_url_hint),
+            placeholder = if (form.sourceType == "html") "https://example.com/news/" else stringResource(R.string.feed_url_placeholder),
+            supporting = if (!form.editing && form.sourceType == "html") "公开、静态的HTTPS文章列表页；先配置并预览再保存"
+                else stringResource(if (form.editing) R.string.feed_url_readonly_hint else R.string.feed_url_hint),
             enabled = !form.editing && !form.submitting,
             // 与实例/AI 地址框一致：URL 键盘、下一项（VR3 实测此处仍是普通文字键盘）
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -718,6 +733,7 @@ private fun FeedFormSurface(
         editingFeed?.let { FeedStatusRow(it) }
 
         // 校验错误紧贴表单下方、不清空输入（设计规范 §5）
+        if (localConfiguration) WebsiteRuleFields(form, onCustomRules, onRules, onPreviewUrl, onPreview)
         form.errorMessage?.let {
             Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
         }

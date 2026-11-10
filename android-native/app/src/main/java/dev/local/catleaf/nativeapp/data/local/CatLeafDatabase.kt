@@ -14,7 +14,7 @@ import androidx.room.RoomDatabase
         OfflinePackageEntity::class,
         AiCacheEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class CatLeafDatabase : RoomDatabase() {
@@ -99,6 +99,13 @@ abstract class CatLeafDatabase : RoomDatabase() {
         @Volatile
         private var instance: CatLeafDatabase? = null
 
+        internal val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE feeds ADD COLUMN sourceType TEXT NOT NULL DEFAULT 'rss'")
+                db.execSQL("ALTER TABLE feeds ADD COLUMN ruleJson TEXT")
+            }
+        }
+
         fun get(context: Context): CatLeafDatabase =
             instance ?: synchronized(this) {
                 instance ?: build(context.applicationContext).also { instance = it }
@@ -106,7 +113,7 @@ abstract class CatLeafDatabase : RoomDatabase() {
 
         private fun build(context: Context): CatLeafDatabase =
             Room.databaseBuilder(context, CatLeafDatabase::class.java, NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 // 不提供 fallbackToDestructiveMigration：迁移缺失时宁可失败进入可恢复错误页，
                 // 也不能静默删库（契约 4.3）。
                 .build()

@@ -18,6 +18,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import dev.local.catleaf.nativeapp.data.article.WebsiteRules
+import dev.local.catleaf.nativeapp.data.network.PublicFetch
+import dev.local.catleaf.nativeapp.data.settings.currentScopeKey
 
 data class FeedManagerUiState(
     val loading: Boolean = false,
@@ -52,14 +57,26 @@ data class FeedFormState(
     val category: String = "",
     val submitting: Boolean = false,
     val errorMessage: String? = null,
+    val sourceType: String = "rss",
+    val customRules: Boolean = false,
+    val rules: WebsiteRules = WebsiteRules(),
+    val previewUrl: String = "",
+    val previewing: Boolean = false,
+    val previewMessage: String? = null,
+    val previewedKey: String? = null,
 ) {
+    val activeRules: WebsiteRules get() = if (sourceType == "rss") WebsiteRules(body = rules.body, exclude = rules.exclude) else rules
+    val ruleJson: String? get() = if (sourceType == "html" || customRules) activeRules.toJson() else null
+    val configurationKey: String get() = listOf(url.trim(), sourceType, ruleJson.orEmpty(), previewUrl.takeIf { sourceType == "rss" }.orEmpty()).joinToString("\n")
     /** URL 形状预校验（L06）：只放行可解析的 HTTPS 地址，表单不再对任意非空串发 HTTP */
     val urlValid: Boolean
         get() = dev.local.catleaf.nativeapp.data.network.EndpointPolicy.normalizeFeedUrl(url) != null
 
     val canSubmit: Boolean
-        get() = urlValid && !submitting &&
-            customTitle.length <= MAX_NAME && category.length <= MAX_CATEGORY
+        get() = urlValid && !submitting && !previewing &&
+            customTitle.length <= MAX_NAME && category.length <= MAX_CATEGORY &&
+            (sourceType == "rss" || sourceType == "html") &&
+            (ruleJson == null || (runCatching { activeRules.requireValid(sourceType) }.isSuccess && previewedKey == configurationKey))
 
     companion object {
         const val MAX_NAME = 120
@@ -67,10 +84,12 @@ data class FeedFormState(
     }
 }
 
-class FeedManagerViewModel(application: Application) : AndroidViewModel(application) {
+class FeedManagerViewModel @JvmOverloads constructor(application: Application, private val publicSourceFetch: PublicFetch = PublicFetch(dev.local.catleaf.nativeapp.data.network.HttpClients.forPublicFeed())) : AndroidViewModel(application) {
 
     private val db = CatLeafDatabase.get(application)
     private val settings = SettingsStore(application)
+    private var formEpoch = 0L
+    private var previewJob: kotlinx.coroutines.Job? = null
 
     private var store: FeedStore? = null
     private var localStore: dev.local.catleaf.nativeapp.data.LocalFeedStore? = null
@@ -103,6 +122,7 @@ class FeedManagerViewModel(application: Application) : AndroidViewModel(applicat
             db = db,
             scopeKey = dev.local.catleaf.nativeapp.data.settings.LOCAL_SCOPE_KEY,
             cleanup = dev.local.catleaf.nativeapp.data.local.CacheCleanup(db, getApplication()),
+            fetchXml = { feed -> dev.local.catleaf.nativeapp.data.rss.LocalFeedFetcher(publicSourceFetch).fetchSource(feed) },
         ).also { localStore = it }
     }
 
@@ -209,30 +229,41 @@ class FeedManagerViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun openAddForm() {
+        formEpoch++
         _form.value = FeedFormState()
     }
 
     /** 发现页预填（L04）：名称/分组可改、URL 预填；提交仍走共同新增路径 */
     fun openPrefilledAddForm(url: String, title: String, category: String) {
+        formEpoch++
         _form.value = FeedFormState(url = url, customTitle = title, category = category)
     }
 
     fun openEditForm(feed: FeedEntity) {
-        _form.value = FeedFormState(
+        formEpoch++
+        val parsedRules = feed.ruleJson?.let { runCatching { WebsiteRules.fromJson(it) } }
+        val form = FeedFormState(
             editing = true,
             feedId = feed.feedId,
             url = feed.url,
             customTitle = feed.title,
             category = feed.category,
+            sourceType = feed.sourceType,
+            customRules = feed.ruleJson != null,
+            rules = parsedRules?.getOrNull() ?: WebsiteRules(),
+            errorMessage = if (parsedRules?.isFailure == true) "已存规则无效，请修正或关闭自定义规则" else null,
         )
+        _form.value = form.copy(previewedKey = form.configurationKey.takeIf { parsedRules?.isFailure != true })
     }
 
     fun closeForm() {
+        previewJob?.cancel()
+        formEpoch++
         _form.value = null
     }
 
     fun onUrlChange(value: String) {
-        _form.value = _form.value?.copy(url = value, errorMessage = null)
+        updateRulesForm { it.copy(url = value) }
     }
 
     fun onTitleChange(value: String) {
@@ -243,23 +274,80 @@ class FeedManagerViewModel(application: Application) : AndroidViewModel(applicat
         _form.value = _form.value?.copy(category = value, errorMessage = null)
     }
 
+    fun onSourceTypeChange(value: String) { if (value in listOf("rss", "html")) updateRulesForm { it.copy(sourceType = value) } }
+    fun onCustomRulesChange(value: Boolean) = updateRulesForm { it.copy(customRules = value) }
+    fun onRulesChange(value: WebsiteRules) = updateRulesForm { it.copy(rules = value) }
+    fun onPreviewUrlChange(value: String) = updateRulesForm { it.copy(previewUrl = value) }
+
+    private fun updateRulesForm(change: (FeedFormState) -> FeedFormState) {
+        val current = _form.value ?: return
+        if (current.submitting) return
+        previewJob?.cancel()
+        _form.value = change(current).copy(previewing = false, previewedKey = null, previewMessage = null, errorMessage = null)
+    }
+
+    fun previewRules(article: Boolean = false) {
+        val form = _form.value ?: return
+        if (form.previewing || form.submitting || !_state.value.localOnly) return
+        val epoch = formEpoch
+        val key = form.configurationKey
+        val bodyPreview = form.sourceType == "rss" || article
+        _form.value = form.copy(previewing = true, errorMessage = null, previewMessage = null)
+        previewJob = viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) { runCatching {
+                form.activeRules.requireValid(form.sourceType)
+                val target = if (bodyPreview) form.previewUrl.trim() else form.url.trim()
+                val response = kotlinx.coroutines.runInterruptible { publicSourceFetch.fetch(target).getOrThrow() }
+                val base = response.finalUrl ?: target
+                val html = dev.local.catleaf.nativeapp.data.article.FullTextExtractor.decodeHtml(response.bytes, response.contentType)
+                if (bodyPreview) {
+                    val body = form.activeRules.extractBody(html, base)
+                    "正文预览 · ${body.textLength}字 / ${body.imageCount}图\n${body.plainText.take(700)}"
+                } else {
+                    val list = form.activeRules.extractList(html, base)
+                    "列表预览 · ${list.items.size}篇 / ${list.unidentifiedCount}条无效\n" + list.items.take(3).joinToString("\n") { it.title }
+                }
+            } }
+            if (formEpoch != epoch || _form.value?.configurationKey != key ||
+                (bodyPreview && _form.value?.previewUrl != form.previewUrl) ||
+                settings.currentScopeKey() != dev.local.catleaf.nativeapp.data.settings.LOCAL_SCOPE_KEY) return@launch
+            _form.value = _form.value?.copy(
+                previewing = false,
+                previewedKey = if (result.isSuccess && (!bodyPreview || form.sourceType == "rss")) key else _form.value?.previewedKey,
+                previewMessage = result.getOrNull(),
+                errorMessage = result.exceptionOrNull()?.message,
+            )
+        }
+    }
+
     fun submitForm() {
         val form = _form.value ?: return
         if (!form.canSubmit) return
+        val epoch = formEpoch
+        val requestedScope = if (_state.value.localOnly) dev.local.catleaf.nativeapp.data.settings.LOCAL_SCOPE_KEY else instanceKey
         _form.value = form.copy(submitting = true, errorMessage = null)
 
         viewModelScope.launch {
+            val expectedScope = requestedScope ?: settings.currentScopeKey()
+            if (settings.currentScopeKey() != expectedScope || formEpoch != epoch) {
+                if (formEpoch == epoch) _form.value = _form.value?.copy(submitting = false, errorMessage = "使用范围已改变，请重新打开表单")
+                return@launch
+            }
             // 登记与验证结果分开报（契约 8.2，L06）：本机与实例同一组合逻辑
             val localBranch = scopeResolver.resolve().kind == ScopeKind.LOCAL
             val result = if (localBranch) {
                 val local = ensureLocalStore()
                 if (form.editing) {
-                    local.updateMeta(form.feedId, form.category, form.customTitle)
+                    local.updateConfigured(form.feedId, form.category, form.customTitle, form.sourceType, form.ruleJson)
                         .map { FeedRegistry.AddResult(form.feedId, verified = true) }
                 } else {
-                    local.add(form.url.trim(), form.category.trim(), form.customTitle.trim())
+                    local.addConfigured(form.url.trim(), form.category.trim(), form.customTitle.trim(), form.sourceType, form.ruleJson)
                 }
             } else {
+                if (form.sourceType != "rss" || form.ruleJson != null) {
+                    _form.value = form.copy(errorMessage = "网页订阅与自定义规则目前仅支持本机使用")
+                    return@launch
+                }
                 val s = ensureStore()
                 if (s == null) {
                     _form.value = _form.value?.copy(submitting = false, errorMessage = "尚未连接实例")
@@ -276,12 +364,13 @@ class FeedManagerViewModel(application: Application) : AndroidViewModel(applicat
                 r
             }
 
+            if (formEpoch != epoch || _form.value == null || settings.currentScopeKey() != expectedScope) return@launch
             result.fold(
                 onSuccess = { added ->
                     if (form.editing) {
                         _form.value = null
                         // 消息随刷新一起写入：refresh 会整体替换状态，先 copy 的提示会被冲掉（VR5 实测）
-                        refresh(message = "已保存")
+                        refresh(message = if (form.ruleJson != null || form.sourceType == "html") "配置已保存，下次刷新订阅或获取全文时应用；旧正文与离线包保持" else "已保存")
                         return@fold
                     }
                     val addResult = buildAddResult(added, form.url.trim(), localBranch)

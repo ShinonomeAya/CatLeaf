@@ -56,6 +56,7 @@ class ArticleSelectionNativeProbeTest {
                         bodyHtml = BilingualArticle.fromHtml("<p>$word</p><p>Native selection probe.</p>").render(),
                         onExternalUrl = { fail("Local text has no external link") },
                         fontSizeSp = 22,
+                        tapToPage = true,
                         onAiSelection = {
                             selected.set(it)
                             calls.incrementAndGet()

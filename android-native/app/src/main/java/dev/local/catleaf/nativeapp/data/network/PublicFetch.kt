@@ -26,6 +26,7 @@ class PublicFetch(
     data class Fetched(
         val bytes: ByteArray,
         val contentType: String?,
+        val finalUrl: String? = null,
     )
 
     sealed class FetchFailure(message: String) : Exception(message) {
@@ -87,7 +88,7 @@ class PublicFetch(
                     return Result.failure(FetchFailure.Unreachable("读取响应失败"))
                 } ?: return Result.failure(FetchFailure.TooLarge())
 
-                return Result.success(Fetched(bytes, r.header("Content-Type")))
+                return Result.success(Fetched(bytes, r.header("Content-Type"), target))
             }
         }
         return Result.failure(FetchFailure.Blocked("跳转次数超过上限（$maxRedirects）"))

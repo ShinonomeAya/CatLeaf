@@ -370,11 +370,7 @@ fun ReaderScreen(
                         if (state.showTranslation && state.translationSegments == null && !translation.isNullOrBlank()) {
                             // 译文是纯文本：不渲染任何 HTML，也不给模型返回内容执行的机会。
                             // 页首块放滚动列顶部：与译文一起滚出视口（T22 F01）
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState()),
-                            ) {
+                            PagedReaderColumn(state.tapToPage, state.bodyFontSizeSp) {
                                 TranslationStatus(state) { viewModel.translate(force = true) }
                                 ReaderHeaderCompose(state)
                                 SelectionContainer {
@@ -416,6 +412,7 @@ fun ReaderScreen(
                                 onAiSelection = if (!state.showTranslation) { text -> viewModel.openAiReadingForSelection(text, localId, state.bodyHash) } else null,
                                 onScrollPosition = { y, height -> viewModel.rememberScrollPosition(localId, y, height) },
                                 fontSizeSp = state.bodyFontSizeSp,
+                                tapToPage = state.tapToPage,
                                 // 正文跟 App 生效的调色板（P07 强制深色时不跟系统）：背景亮度即答案
                                 darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f,
                                 offlineSnapshot = state.offlineSnapshot,
@@ -423,11 +420,7 @@ fun ReaderScreen(
                         } else {
                             // 没有任何可显示文本时也不能给空白页：说明情况并留原网页入口。
                             // 标题/书签说明仍要显示：放在可滚动的页首块里
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState()),
-                            ) {
+                            PagedReaderColumn(state.tapToPage, state.bodyFontSizeSp) {
                                 ReaderHeaderCompose(state)
                                 Text(
                                     text = stringResource(R.string.reader_no_content),
