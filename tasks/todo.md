@@ -116,3 +116,9 @@
 - [x] V01最终源码221项单元、70项Android 10定向仪器、3项横屏视口、八组48张原生截图。lint 0错误/29警告/2提示，四项wrapper成功。最终同签名APK和手机拉回包哈希一致。
 - [x] [候选清单](../docs/releases/0.1.29/release.json)、[验收记录](../docs/validation/验收记录.md)、[用法与两站规则示例](../docs/14-本机使用与实例帮助.md)同步。原始证据在仓库外。
 - [ ] 实体墨水屏刷新、真机旋转过程与TalkBack新手势联动。完整G7/G8、F09及既有发布缺口继续待验。
+
+## 2026-11-10 0.1.29 公开测试版与更新清单
+
+- [x] 同签名 APK 和独立校验文件已作为 [Pre-release](https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.29) 公开。标签与源码 CI 核对通过。
+- [x] 匿名完整下载、SHA-256、签名和 HTTP 206 分段读取通过。README 下载与 [App 更新清单](../docs/releases/latest.json) 已切到 0.1.29。线上清单通过旧版及当前版的解析回放。
+- [ ] 发布后的手机内联网检查、实体墨水屏实测与完整 G7/G8、F09 待验。
