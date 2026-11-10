@@ -4,14 +4,16 @@
   "packageName": "dev.local.catleaf.nativeapp",
   "minSdk": 29,
   "targetSdk": 36,
-  "status": "candidate-not-published",
+  "status": "published-pre-release",
   "validationDate": "2026-11-10",
   "apk": {
     "bytes": 28920154,
     "sha256": "92ac5ba2dd9f0bed74530f7d7cbbf3343b348984c88643c69cd97ebb9fe6f304",
     "certificateSha256": "5f782c4afaf517286d0f5f2a2bd6d8d9f9e2ef9d1cc27b5d4084c65ad64d3f73",
     "signatureScheme": "APK Signature Scheme v2",
-    "installedPhysicalApkSha256": "92ac5ba2dd9f0bed74530f7d7cbbf3343b348984c88643c69cd97ebb9fe6f304"
+    "installedPhysicalApkSha256": "92ac5ba2dd9f0bed74530f7d7cbbf3343b348984c88643c69cd97ebb9fe6f304",
+    "url": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.29/catleaf-0.1.29-code30.apk",
+    "checksumUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.29/catleaf-0.1.29-code30.sha256"
   },
   "validation": {
     "unitTests": 221,
@@ -37,15 +39,24 @@
     "sampleNetworkOnIsolatedAndroid10": "timeout",
     "actualAiRequests": 0,
     "fullG7": false,
-    "formalG8": false
+    "formalG8": false,
+    "anonymousAssetsVerified": true,
+    "anonymousRangeVerified": true,
+    "sourceCI": 42779360935
   },
   "source": {
-    "baselineCommit": "781620798ece762ea19f30021fe72ed1cee31612",
-    "workingTreeCandidate": true
+    "baselineCommit": "781620798ece762ea19f30021fe72ed1cee31612"
   },
   "pending": [
     "Physical E-ink refresh and ghosting",
     "TalkBack interaction with tap paging and on-device rotation transition",
     "Complete G7/G8 and F09"
-  ]
+  ],
+  "sourceCommit": "1e4a930911df22280a2064f0010946e470cc6141",
+  "publication": {
+    "tag": "v0.1.29",
+    "url": "https://github.com/ShinonomeAya/CatLeaf/releases/tag/v0.1.29",
+    "publishedAt": "2026-11-10T08:05:25Z",
+    "prerelease": true
+  }
 }

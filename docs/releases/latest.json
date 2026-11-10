@@ -1,8 +1,8 @@
 {
   "packageId": "dev.local.catleaf.nativeapp",
   "published": true,
-  "version": "0.1.28",
-  "versionCode": 29,
-  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.28/catleaf-0.1.28-code29.apk",
-  "releaseNotes": "公开测试版：新增AI解读与可折叠原文依据，支持选文解释、问本文；完善OPML分批导入和逐项重试。可同签名覆盖升级，保留数据。"
+  "version": "0.1.29",
+  "versionCode": 30,
+  "downloadUrl": "https://github.com/ShinonomeAya/CatLeaf/releases/download/v0.1.29/catleaf-0.1.29-code30.apk",
+  "releaseNotes": "公开测试版。新增正文点击翻页、本机 RSS 全文规则与静态网页订阅。状态备份 v3 可保留网页源和规则。支持同签名覆盖升级。"
 }
